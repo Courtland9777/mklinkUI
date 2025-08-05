@@ -1,7 +1,12 @@
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 
 namespace MklinkUI.Core.Services;
 
+/// <summary>
+/// Windows-specific symbolic link implementation using kernel32 APIs.
+/// </summary>
+[SupportedOSPlatform("windows")]
 public class WindowsSymbolicLink : ISymbolicLink
 {
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]

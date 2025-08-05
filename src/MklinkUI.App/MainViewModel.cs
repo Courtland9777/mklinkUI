@@ -5,7 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Security.Principal;
-using System.Windows.Forms;
+using Forms = System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows;
 using MklinkUI.Core.Services;
@@ -203,8 +203,8 @@ public class MainViewModel : INotifyPropertyChanged
     {
         if (IsDirectory)
         {
-            using var dialog = new FolderBrowserDialog();
-            if (dialog.ShowDialog() == DialogResult.OK)
+            using var dialog = new Forms.FolderBrowserDialog();
+            if (dialog.ShowDialog() == Forms.DialogResult.OK)
                 SourcePath = dialog.SelectedPath;
         }
         else
@@ -219,8 +219,8 @@ public class MainViewModel : INotifyPropertyChanged
     {
         if (IsDirectory)
         {
-            using var dialog = new FolderBrowserDialog();
-            if (dialog.ShowDialog() == DialogResult.OK)
+            using var dialog = new Forms.FolderBrowserDialog();
+            if (dialog.ShowDialog() == Forms.DialogResult.OK)
                 DestinationPath = dialog.SelectedPath;
         }
         else
