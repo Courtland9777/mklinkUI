@@ -5,29 +5,46 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Security.Principal;
-using Forms = System.Windows.Forms;
-using System.Windows.Input;
 using System.Windows;
+using System.Windows.Input;
+using Microsoft.Win32;
 using MklinkUI.Core.Services;
 using MklinkUI.Core.Settings;
+using Forms = System.Windows.Forms;
 
 namespace MklinkUI.App;
 
 public class MainViewModel : INotifyPropertyChanged
 {
     private readonly IDeveloperModeService _developerModeService;
-    private readonly ISymbolicLinkService _symbolicLinkService;
-    private readonly ISettingsService _settingsService;
-    private readonly IThemeService _themeService;
-    private readonly ThemeManager _themeManager;
-    private readonly string _logPath;
     private readonly bool _isElevated;
+    private readonly string _logPath;
+    private readonly ISettingsService _settingsService;
+    private readonly ISymbolicLinkService _symbolicLinkService;
+    private readonly ThemeManager _themeManager;
+    private readonly IThemeService _themeService;
+
+    private string _destinationPath = string.Empty;
+
+    private string _developerModeStatus = string.Empty;
+
+    private bool _isDirectory;
+
+    private string _logContent = string.Empty;
+
+    private ThemeOption _selectedTheme;
+
+    private string _sourcePath = string.Empty;
+
+    private bool _startMinimizedToTray;
+
+    private string _statusMessage = string.Empty;
 
     public MainViewModel(IDeveloperModeService developerModeService,
-                         ISymbolicLinkService symbolicLinkService,
-                         ISettingsService settingsService,
-                         IThemeService themeService,
-                         ThemeManager themeManager)
+        ISymbolicLinkService symbolicLinkService,
+        ISettingsService settingsService,
+        IThemeService themeService,
+        ThemeManager themeManager)
     {
         _developerModeService = developerModeService;
         _symbolicLinkService = symbolicLinkService;
@@ -66,7 +83,6 @@ public class MainViewModel : INotifyPropertyChanged
 
     public ThemeOption[] Themes { get; }
 
-    private ThemeOption _selectedTheme;
     public ThemeOption SelectedTheme
     {
         get => _selectedTheme;
@@ -81,7 +97,6 @@ public class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    private bool _startMinimizedToTray;
     public bool StartMinimizedToTray
     {
         get => _startMinimizedToTray;
@@ -96,7 +111,6 @@ public class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    private string _sourcePath = string.Empty;
     public string SourcePath
     {
         get => _sourcePath;
@@ -112,7 +126,6 @@ public class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    private string _destinationPath = string.Empty;
     public string DestinationPath
     {
         get => _destinationPath;
@@ -128,7 +141,6 @@ public class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    private bool _isDirectory;
     public bool IsDirectory
     {
         get => _isDirectory;
@@ -143,7 +155,6 @@ public class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    private string _developerModeStatus = string.Empty;
     public string DeveloperModeStatus
     {
         get => _developerModeStatus;
@@ -156,18 +167,16 @@ public class MainViewModel : INotifyPropertyChanged
 
     public string ElevationStatus { get; }
 
-    private string _statusMessage = string.Empty;
     public string StatusMessage
     {
         get => _statusMessage;
-        private set
+        internal set
         {
             _statusMessage = value;
             OnPropertyChanged();
         }
     }
 
-    private string _logContent = string.Empty;
     public string LogContent
     {
         get => _logContent;
@@ -186,6 +195,8 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand OpenDeveloperModeSettingsCommand { get; }
     public ICommand RefreshDeveloperModeCommand { get; }
 
+    public event PropertyChangedEventHandler? PropertyChanged;
+
     private void ApplyAndSaveTheme()
     {
         var actual = _themeService.ResolveTheme(SelectedTheme);
@@ -193,11 +204,14 @@ public class MainViewModel : INotifyPropertyChanged
         SaveSettings();
     }
 
-    private void SaveSettings() => _settingsService.Save(new AppSettings
+    private void SaveSettings()
     {
-        Theme = SelectedTheme,
-        StartMinimizedToTray = StartMinimizedToTray
-    });
+        _settingsService.Save(new AppSettings
+        {
+            Theme = SelectedTheme,
+            StartMinimizedToTray = StartMinimizedToTray
+        });
+    }
 
     private void BrowseSource()
     {
@@ -209,7 +223,7 @@ public class MainViewModel : INotifyPropertyChanged
         }
         else
         {
-            var dialog = new Microsoft.Win32.OpenFileDialog();
+            var dialog = new OpenFileDialog();
             if (dialog.ShowDialog() == true)
                 SourcePath = dialog.FileName;
         }
@@ -225,7 +239,7 @@ public class MainViewModel : INotifyPropertyChanged
         }
         else
         {
-            var dialog = new Microsoft.Win32.SaveFileDialog();
+            var dialog = new SaveFileDialog();
             if (dialog.ShowDialog() == true)
                 DestinationPath = dialog.FileName;
         }
@@ -233,10 +247,10 @@ public class MainViewModel : INotifyPropertyChanged
 
     private void CreateLink()
     {
-        var validation = ValidateInput();
-        if (!validation.IsValid)
+        var (isValid, message) = ValidateInput();
+        if (!isValid)
         {
-            StatusMessage = validation.Message ?? string.Empty;
+            StatusMessage = message ?? string.Empty;
             return;
         }
 
@@ -273,7 +287,6 @@ public class MainViewModel : INotifyPropertyChanged
                 "Developer Mode disabled", MessageBoxButton.YesNo, MessageBoxImage.Warning);
 
             if (openSettings == MessageBoxResult.Yes)
-            {
                 try
                 {
                     Process.Start(new ProcessStartInfo
@@ -286,7 +299,6 @@ public class MainViewModel : INotifyPropertyChanged
                 {
                     // ignored
                 }
-            }
         }
 
         var relaunch = MessageBox.Show(
@@ -297,7 +309,10 @@ public class MainViewModel : INotifyPropertyChanged
             RelaunchElevatedCommand.Execute(null);
     }
 
-    private bool CanCreateLink() => ValidateInput().IsValid;
+    private bool CanCreateLink()
+    {
+        return ValidateInput().IsValid;
+    }
 
     private (bool IsValid, string? Message) ValidateInput()
     {
@@ -338,13 +353,11 @@ public class MainViewModel : INotifyPropertyChanged
     {
         var dir = Path.GetDirectoryName(_logPath);
         if (!string.IsNullOrEmpty(dir) && Directory.Exists(dir))
-        {
             Process.Start(new ProcessStartInfo
             {
                 FileName = dir,
                 UseShellExecute = true
             });
-        }
     }
 
     private void RelaunchElevated()
@@ -361,7 +374,7 @@ public class MainViewModel : INotifyPropertyChanged
                 Verb = "runas",
                 UseShellExecute = true
             });
-            System.Windows.Application.Current.Shutdown();
+            Application.Current.Shutdown();
         }
         catch
         {
@@ -393,9 +406,10 @@ public class MainViewModel : INotifyPropertyChanged
             : "Developer Mode is disabled";
     }
 
-    public event PropertyChangedEventHandler? PropertyChanged;
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
 
     private void RaiseCanExecuteChanged()
     {
