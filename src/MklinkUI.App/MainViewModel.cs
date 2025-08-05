@@ -8,6 +8,7 @@ using System.Security.Principal;
 using System.Windows.Forms;
 using System.Windows.Input;
 using MklinkUI.Core.Services;
+using MklinkUI.Core.Settings;
 
 namespace MklinkUI.App;
 
@@ -15,13 +16,24 @@ public class MainViewModel : INotifyPropertyChanged
 {
     private readonly IDeveloperModeService _developerModeService;
     private readonly ISymbolicLinkService _symbolicLinkService;
+    private readonly ISettingsService _settingsService;
+    private readonly IThemeService _themeService;
+    private readonly ThemeManager _themeManager;
     private readonly string _logPath;
     private readonly bool _isElevated;
 
-    public MainViewModel(IDeveloperModeService developerModeService, ISymbolicLinkService symbolicLinkService)
+    public MainViewModel(IDeveloperModeService developerModeService,
+                         ISymbolicLinkService symbolicLinkService,
+                         ISettingsService settingsService,
+                         IThemeService themeService,
+                         ThemeManager themeManager)
     {
         _developerModeService = developerModeService;
         _symbolicLinkService = symbolicLinkService;
+        _settingsService = settingsService;
+        _themeService = themeService;
+        _themeManager = themeManager;
+
         DeveloperModeStatus = _developerModeService.IsDeveloperModeEnabled()
             ? "Developer Mode is enabled"
             : "Developer Mode is disabled";
@@ -37,7 +49,46 @@ public class MainViewModel : INotifyPropertyChanged
         CreateLinkCommand = new RelayCommand(CreateLink, CanCreateLink);
         OpenLogCommand = new RelayCommand(OpenLogFolder);
         RelaunchElevatedCommand = new RelayCommand(RelaunchElevated, () => !_isElevated);
+
+        Themes = Enum.GetValues<ThemeOption>();
+        var settings = _settingsService.Load();
+        _selectedTheme = settings.Theme;
+        _startMinimizedToTray = settings.StartMinimizedToTray;
+        _themeManager.Apply(_themeService.ResolveTheme(_selectedTheme));
+
         UpdateLogContent();
+    }
+
+    public ThemeOption[] Themes { get; }
+
+    private ThemeOption _selectedTheme;
+    public ThemeOption SelectedTheme
+    {
+        get => _selectedTheme;
+        set
+        {
+            if (_selectedTheme != value)
+            {
+                _selectedTheme = value;
+                OnPropertyChanged();
+                ApplyAndSaveTheme();
+            }
+        }
+    }
+
+    private bool _startMinimizedToTray;
+    public bool StartMinimizedToTray
+    {
+        get => _startMinimizedToTray;
+        set
+        {
+            if (_startMinimizedToTray != value)
+            {
+                _startMinimizedToTray = value;
+                OnPropertyChanged();
+                SaveSettings();
+            }
+        }
     }
 
     private string _sourcePath = string.Empty;
@@ -118,6 +169,19 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand CreateLinkCommand { get; }
     public ICommand OpenLogCommand { get; }
     public ICommand RelaunchElevatedCommand { get; }
+
+    private void ApplyAndSaveTheme()
+    {
+        var actual = _themeService.ResolveTheme(SelectedTheme);
+        _themeManager.Apply(actual);
+        SaveSettings();
+    }
+
+    private void SaveSettings() => _settingsService.Save(new AppSettings
+    {
+        Theme = SelectedTheme,
+        StartMinimizedToTray = StartMinimizedToTray
+    });
 
     private void BrowseSource()
     {
@@ -253,4 +317,3 @@ public class MainViewModel : INotifyPropertyChanged
             rc.RaiseCanExecuteChanged();
     }
 }
-
