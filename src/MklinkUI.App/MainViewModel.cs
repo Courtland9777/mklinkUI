@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Security.Principal;
 using System.Windows.Forms;
 using System.Windows.Input;
+using System.Windows;
 using MklinkUI.Core.Services;
 using MklinkUI.Core.Settings;
 
@@ -36,19 +37,23 @@ public class MainViewModel : INotifyPropertyChanged
 
         DeveloperModeStatus = _developerModeService.IsDeveloperModeEnabled()
             ? "Developer Mode is enabled"
-            : "Developer Mode is disabled";
+            : "Developer Mode is disabled (enables symbolic link creation without administrator rights)";
 
         var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
         _logPath = Path.Combine(appData, "MklinkUI", "app.log");
 
         _isElevated = new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
-        ElevationStatus = _isElevated ? "Running as Administrator" : "Not running as Administrator";
+        ElevationStatus = _isElevated
+            ? "Running as Administrator"
+            : "Not running as Administrator (required unless Developer Mode is enabled)";
 
         BrowseSourceCommand = new RelayCommand(BrowseSource);
         BrowseDestinationCommand = new RelayCommand(BrowseDestination);
         CreateLinkCommand = new RelayCommand(CreateLink, CanCreateLink);
         OpenLogCommand = new RelayCommand(OpenLogFolder);
         RelaunchElevatedCommand = new RelayCommand(RelaunchElevated, () => !_isElevated);
+        OpenDeveloperModeSettingsCommand = new RelayCommand(OpenDeveloperModeSettings);
+        RefreshDeveloperModeCommand = new RelayCommand(RefreshDeveloperMode);
 
         Themes = Enum.GetValues<ThemeOption>();
         var settings = _settingsService.Load();
@@ -138,7 +143,16 @@ public class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    public string DeveloperModeStatus { get; }
+    private string _developerModeStatus = string.Empty;
+    public string DeveloperModeStatus
+    {
+        get => _developerModeStatus;
+        private set
+        {
+            _developerModeStatus = value;
+            OnPropertyChanged();
+        }
+    }
 
     public string ElevationStatus { get; }
 
@@ -169,6 +183,8 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand CreateLinkCommand { get; }
     public ICommand OpenLogCommand { get; }
     public ICommand RelaunchElevatedCommand { get; }
+    public ICommand OpenDeveloperModeSettingsCommand { get; }
+    public ICommand RefreshDeveloperModeCommand { get; }
 
     private void ApplyAndSaveTheme()
     {
@@ -225,14 +241,60 @@ public class MainViewModel : INotifyPropertyChanged
         }
 
         var result = _symbolicLinkService.CreateSymbolicLink(SourcePath, DestinationPath, IsDirectory);
-        StatusMessage = result.Success
-            ? "Symbolic link created successfully."
-            : result.ErrorMessage ?? "Failed to create symbolic link.";
+        if (result.Success)
+        {
+            StatusMessage = "Symbolic link created successfully.";
+            UpdateLogContent();
+            return;
+        }
 
-        if (!result.Success && result.ErrorCode == 1314 && !_isElevated)
-            StatusMessage += " Try running as administrator.";
+        if (result.ErrorCode == 1314)
+            HandlePrivilegeError();
+        else
+            StatusMessage = result.ErrorMessage ?? "Failed to create symbolic link.";
 
         UpdateLogContent();
+    }
+
+    private void HandlePrivilegeError()
+    {
+        var devModeEnabled = _developerModeService.IsDeveloperModeEnabled();
+        StatusMessage = devModeEnabled
+            ? "Administrator privileges are required to create this symbolic link."
+            : "Developer Mode is disabled and administrator privileges are required to create this symbolic link.";
+
+        if (_isElevated)
+            return;
+
+        if (!devModeEnabled)
+        {
+            var openSettings = MessageBox.Show(
+                "Developer Mode is disabled. Enable it in Windows Settings to create symbolic links without administrator privileges. Open Developer Mode settings now?",
+                "Developer Mode disabled", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+
+            if (openSettings == MessageBoxResult.Yes)
+            {
+                try
+                {
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "ms-settings:developers",
+                        UseShellExecute = true
+                    });
+                }
+                catch
+                {
+                    // ignored
+                }
+            }
+        }
+
+        var relaunch = MessageBox.Show(
+            "Would you like to relaunch the application with administrative rights?",
+            "Elevation required", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+        if (relaunch == MessageBoxResult.Yes && RelaunchElevatedCommand.CanExecute(null))
+            RelaunchElevatedCommand.Execute(null);
     }
 
     private bool CanCreateLink() => ValidateInput().IsValid;
@@ -305,6 +367,30 @@ public class MainViewModel : INotifyPropertyChanged
         {
             StatusMessage = "Elevation cancelled.";
         }
+    }
+
+    private void OpenDeveloperModeSettings()
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "ms-settings:developers",
+                UseShellExecute = true
+            });
+        }
+        catch
+        {
+            StatusMessage = "Failed to open settings.";
+        }
+    }
+
+    private void RefreshDeveloperMode()
+    {
+        _developerModeService.RefreshState();
+        DeveloperModeStatus = _developerModeService.IsDeveloperModeEnabled()
+            ? "Developer Mode is enabled"
+            : "Developer Mode is disabled";
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

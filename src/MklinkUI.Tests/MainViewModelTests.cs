@@ -48,5 +48,18 @@ public class MainViewModelTests
 
         vm.StatusMessage.Should().Be("error");
     }
+
+    [Fact]
+    public void RefreshDeveloperModeCommand_UpdatesStatus()
+    {
+        var dev = new Mock<IDeveloperModeService>();
+        dev.SetupSequence(d => d.IsDeveloperModeEnabled()).Returns(false).Returns(true);
+        var vm = CreateViewModel(dev);
+
+        vm.RefreshDeveloperModeCommand.Execute(null);
+
+        dev.Verify(d => d.RefreshState(), Times.Once);
+        vm.DeveloperModeStatus.Should().Be("Developer Mode is enabled");
+    }
 }
 #endif
