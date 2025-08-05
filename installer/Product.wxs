@@ -1,2 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Placeholder WiX product file -->
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product Id="*" Name="MklinkUI" Language="1033" Version="1.0.0.0" Manufacturer="MklinkUI" UpgradeCode="12345678-1234-1234-1234-123456789abc">
+    <Package InstallerVersion="500" Compressed="yes" InstallScope="perMachine" />
+    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+    <MediaTemplate />
+    <Feature Id="MainFeature" Title="MklinkUI" Level="1">
+      <ComponentGroupRef Id="ProductComponents" />
+    </Feature>
+  </Product>
+
+  <Fragment>
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFilesFolder">
+        <Directory Id="INSTALLFOLDER" Name="MklinkUI" />
+      </Directory>
+      <Directory Id="ProgramMenuFolder" />
+    </Directory>
+  </Fragment>
+
+  <Fragment>
+    <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
+      <Component Id="ExeComponent" Guid="*">
+        <File Source="..\src\MklinkUI.App\bin\$(var.Configuration)\net8.0-windows\MklinkUI.App.exe" KeyPath="yes" />
+        <Shortcut Id="StartMenuShortcut" Directory="ProgramMenuFolder" Name="MklinkUI" WorkingDirectory="INSTALLFOLDER" Icon="icon.ico" Advertise="no" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+</Wix>
