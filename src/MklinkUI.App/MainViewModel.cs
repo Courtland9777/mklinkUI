@@ -49,6 +49,8 @@ public class MainViewModel : INotifyPropertyChanged
         CreateLinkCommand = new RelayCommand(CreateLink, CanCreateLink);
         OpenLogCommand = new RelayCommand(OpenLogFolder);
         RelaunchElevatedCommand = new RelayCommand(RelaunchElevated, () => !_isElevated);
+        OpenDeveloperModeSettingsCommand = new RelayCommand(OpenDeveloperModeSettings);
+        RefreshDeveloperModeCommand = new RelayCommand(RefreshDeveloperMode);
 
         Themes = Enum.GetValues<ThemeOption>();
         var settings = _settingsService.Load();
@@ -138,7 +140,16 @@ public class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    public string DeveloperModeStatus { get; }
+    private string _developerModeStatus = string.Empty;
+    public string DeveloperModeStatus
+    {
+        get => _developerModeStatus;
+        private set
+        {
+            _developerModeStatus = value;
+            OnPropertyChanged();
+        }
+    }
 
     public string ElevationStatus { get; }
 
@@ -169,6 +180,8 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand CreateLinkCommand { get; }
     public ICommand OpenLogCommand { get; }
     public ICommand RelaunchElevatedCommand { get; }
+    public ICommand OpenDeveloperModeSettingsCommand { get; }
+    public ICommand RefreshDeveloperModeCommand { get; }
 
     private void ApplyAndSaveTheme()
     {
@@ -305,6 +318,30 @@ public class MainViewModel : INotifyPropertyChanged
         {
             StatusMessage = "Elevation cancelled.";
         }
+    }
+
+    private void OpenDeveloperModeSettings()
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "ms-settings:developers",
+                UseShellExecute = true
+            });
+        }
+        catch
+        {
+            StatusMessage = "Failed to open settings.";
+        }
+    }
+
+    private void RefreshDeveloperMode()
+    {
+        _developerModeService.RefreshState();
+        DeveloperModeStatus = _developerModeService.IsDeveloperModeEnabled()
+            ? "Developer Mode is enabled"
+            : "Developer Mode is disabled";
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

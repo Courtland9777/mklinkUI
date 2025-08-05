@@ -30,5 +30,6 @@ The application displays the current Developer Mode status. You can create file 
 - **Tray icon** – minimizing or closing hides the window to the system tray. The tray menu provides *Open* and *Exit* actions, and an option allows starting minimized.
 - **Drag and drop** – drop files or folders onto the source or destination boxes to populate the paths.
 - **Browse buttons** – open standard Windows dialogs to select source files/folders and destination targets.
+- **Developer Mode tools** – open Windows Developer Mode settings or refresh the detected Developer Mode status.
 
 Symlink creation and installer features will be added in future iterations.
