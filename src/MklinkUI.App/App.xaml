@@ -3,5 +3,12 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
+        <Style TargetType="Window">
+            <Setter Property="Background" Value="{DynamicResource AppBackground}"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
+        </Style>
+        <Style TargetType="Control">
+            <Setter Property="Foreground" Value="{DynamicResource AppForeground}"/>
+        </Style>
     </Application.Resources>
 </Application>
