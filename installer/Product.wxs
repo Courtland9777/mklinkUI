@@ -4,6 +4,8 @@
     <Package InstallerVersion="500" Compressed="yes" InstallScope="perMachine" />
     <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
     <MediaTemplate />
+    <Icon Id="AppIcon" SourceFile="..\\assets\\icons\\mklinkUI_icon.ico" />
+    <Property Id="ARPPRODUCTICON" Value="AppIcon" />
     <Feature Id="MainFeature" Title="MklinkUI" Level="1">
       <ComponentGroupRef Id="ProductComponents" />
     </Feature>
@@ -22,7 +24,7 @@
     <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
       <Component Id="ExeComponent" Guid="*">
         <File Source="..\src\MklinkUI.App\bin\$(var.Configuration)\net8.0-windows\MklinkUI.App.exe" KeyPath="yes" />
-        <Shortcut Id="StartMenuShortcut" Directory="ProgramMenuFolder" Name="MklinkUI" WorkingDirectory="INSTALLFOLDER" Icon="icon.ico" Advertise="no" />
+        <Shortcut Id="StartMenuShortcut" Directory="ProgramMenuFolder" Name="MklinkUI" WorkingDirectory="INSTALLFOLDER" Icon="AppIcon" Advertise="no" />
       </Component>
     </ComponentGroup>
   </Fragment>
