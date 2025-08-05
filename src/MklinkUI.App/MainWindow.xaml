@@ -10,6 +10,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
@@ -24,11 +25,20 @@
 
         <CheckBox Grid.Row="2" Grid.ColumnSpan="2" Content="Directory Link" IsChecked="{Binding IsDirectory}" Margin="0,0,0,5"/>
 
-        <TextBlock Grid.Row="3" Grid.ColumnSpan="2" Text="{Binding DeveloperModeStatus}" Margin="0,0,0,5"/>
+        <StackPanel Grid.Row="3" Grid.ColumnSpan="2" Orientation="Vertical" Margin="0,0,0,5">
+            <TextBlock Text="{Binding DeveloperModeStatus}"/>
+            <TextBlock Text="{Binding ElevationStatus}"/>
+        </StackPanel>
 
-        <Button Grid.Row="4" Grid.ColumnSpan="2" Content="Create Link" Command="{Binding CreateLinkCommand}" Margin="0,0,0,5"/>
+        <StackPanel Grid.Row="4" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,0,0,5" HorizontalAlignment="Left">
+            <Button Content="Create Link" Command="{Binding CreateLinkCommand}" Margin="0,0,5,0"/>
+            <Button Content="Open Logs" Command="{Binding OpenLogCommand}" Margin="0,0,5,0"/>
+            <Button Content="Run as Admin" Command="{Binding RelaunchElevatedCommand}"/>
+        </StackPanel>
 
         <TextBox Grid.Row="5" Grid.ColumnSpan="2" Text="{Binding LogContent}" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
+
+        <TextBlock Grid.Row="6" Grid.ColumnSpan="2" Text="{Binding StatusMessage}" Foreground="Red" Margin="0,5,0,0"/>
     </Grid>
 </Window>
 
