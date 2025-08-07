@@ -32,7 +32,13 @@
   <Fragment>
     <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
       <Component Guid="*">
-        <File Source="..\\src\\MklinkUI.App\\bin\\$(var.Configuration)\\net8.0-windows\\publish\\MklinkUI.App.exe" KeyPath="yes" />
+        <File Source="..\\src\\MklinkUI.App\\bin\\$(var.Configuration)\\net8.0-windows\\publish\\MklinkUI.App.exe" />
+        <RegistryValue Root="HKCU"
+                       Key="Software\\MklinkUI"
+                       Name="Installed"
+                       Type="string"
+                       Value="1"
+                       KeyPath="yes" />
         <Shortcut Id="StartMenuShortcut" Directory="ProgramMenuFolder" Name="MklinkUI" WorkingDirectory="INSTALLFOLDER" Icon="AppIcon" Advertise="no" />
       </Component>
     </ComponentGroup>
