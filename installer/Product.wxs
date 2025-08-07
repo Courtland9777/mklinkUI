@@ -21,12 +21,12 @@
   </Package>
 
   <Fragment>
-    <Directory Id="TARGETDIR" Name="SourceDir">
+    <DirectoryRef Id="TARGETDIR">
       <Directory Id="ProgramFilesFolder">
         <Directory Id="INSTALLFOLDER" Name="MklinkUI" />
       </Directory>
       <Directory Id="ProgramMenuFolder" />
-    </Directory>
+    </DirectoryRef>
   </Fragment>
 
   <Fragment>
