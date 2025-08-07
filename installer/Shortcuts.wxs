@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Fragment>
+    <ComponentGroup Id="MklinkUIShortcuts" Directory="ApplicationProgramsFolder">
+
+      <!-- App Shortcut -->
+      <Component Guid="9ed8fc20-eb1c-41ee-b7fc-a1abee87454a">
+        <Shortcut Id="MklinkUIShortcut"
+                  Name="MklinkUI"
+                  Target="[INSTALLFOLDER]MklinkUI.exe"
+                  WorkingDirectory="INSTALLFOLDER"
+                  Icon="AppIcon"
+                  Advertise="no" />
+        <RemoveFile Id="RemoveAppShortcut"
+                    Name="MklinkUI.lnk"
+                    Directory="ApplicationProgramsFolder"
+                    On="uninstall" />
+        <RegistryValue Root="HKCU"
+                       Key="Software\MklinkUI"
+                       Name="ShortcutInstalled"
+                       Type="integer"
+                       Value="1"
+                       KeyPath="yes" />
+      </Component>
+
+      <!-- Uninstall Shortcut -->
+      <Component Guid="b4d776ef-2416-407f-b9b3-1b5461670c27">
+        <Shortcut Id="UninstallShortcut"
+                  Name="Uninstall MklinkUI"
+                  Target="[SystemFolder]msiexec.exe"
+                  Arguments="/x [ProductCode]"
+                  Icon="UninstallIcon.ico"
+                  Advertise="no" />
+        <RemoveFile Id="RemoveUninstallShortcut"
+                    Name="Uninstall MklinkUI.lnk"
+                    Directory="ApplicationProgramsFolder"
+                    On="uninstall" />
+        <RegistryValue Root="HKCU"
+                       Key="Software\MklinkUI"
+                       Name="UninstallShortcutInstalled"
+                       Type="integer"
+                       Value="1"
+                       KeyPath="yes" />
+      </Component>
+
+      <!-- Clean up the Start Menu folder itself -->
+      <Component Guid="f3e743f9-f3d3-4050-86e4-8ea1d103ec57">
+        <RemoveFolder Id="RemoveStartMenuFolder"
+                      Directory="ApplicationProgramsFolder"
+                      On="uninstall" />
+        <RegistryValue Root="HKCU"
+                       Key="Software\MklinkUI"
+                       Name="StartMenuCleanup"
+                       Type="integer"
+                       Value="1"
+                       KeyPath="yes" />
+      </Component>
+
+    </ComponentGroup>
+  </Fragment>
+</Wix>
