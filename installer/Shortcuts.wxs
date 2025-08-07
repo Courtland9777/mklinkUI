@@ -7,7 +7,7 @@
       <Component Guid="9ed8fc20-eb1c-41ee-b7fc-a1abee87454a">
         <Shortcut Id="MklinkUIShortcut"
                   Name="MklinkUI"
-                  Target="[INSTALLFOLDER]MklinkUI.exe"
+                  Target="[INSTALLFOLDER]MklinkUI.app.exe"
                   WorkingDirectory="INSTALLFOLDER"
                   Icon="AppIcon"
                   Advertise="no" />
