@@ -17,7 +17,7 @@
     <ui:WixUI Id="WixUI_Minimal" InstallDirectory="INSTALLFOLDER" />
 
     <Icon Id="AppIcon" SourceFile="..\\assets\\icons\\mklinkUI_icon.ico" />
-    <Property Id="ARPPRODUCTICON" Value="AppIcon" />
+    <Property Id="APPRODUCTICON" Value="AppIcon" />
   </Package>
 
   <Fragment>
