@@ -1,8 +1,17 @@
 <Window x:Class="MklinkUI.App.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:MklinkUI.App"
         Title="Mklink UI" Height="200" Width="400">
+    <Window.DataContext>
+        <local:MainViewModel />
+    </Window.DataContext>
+
     <StackPanel Margin="10">
         <TextBlock x:Name="DeveloperModeStatus" FontSize="16" />
+        <!-- Display the log file content. The TextBox binding is marked OneWay because
+             LogContent is a read-only property and a TwoWay binding would cause a runtime
+             exception. -->
+        <TextBox Text="{Binding LogContent, Mode=OneWay}" IsReadOnly="True" Margin="0,10,0,0" />
     </StackPanel>
 </Window>
