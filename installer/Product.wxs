@@ -25,14 +25,14 @@
       <Directory Id="ProgramFilesFolder">
         <Directory Id="INSTALLFOLDER" Name="MklinkUI" />
       </Directory>
-      <Directory Id="ProgramMenuFolder" />
     </DirectoryRef>
+    <DirectoryRef Id="ProgramMenuFolder" />
   </Fragment>
 
   <Fragment>
     <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
       <Component Guid="*">
-        <File Source="..\\src\\MklinkUI.App\\bin\\$(var.Configuration)\\net8.0-windows\\win-x64\\publish\\win-x64\\MklinkUI.App.exe" KeyPath="yes" />
+        <File Source="..\\src\\MklinkUI.App\\bin\\$(var.Configuration)\\net8.0-windows\\publish\\MklinkUI.App.exe" KeyPath="yes" />
         <Shortcut Id="StartMenuShortcut" Directory="ProgramMenuFolder" Name="MklinkUI" WorkingDirectory="INSTALLFOLDER" Icon="AppIcon" Advertise="no" />
       </Component>
     </ComponentGroup>
