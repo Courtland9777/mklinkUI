@@ -342,10 +342,21 @@ public class MainViewModel : INotifyPropertyChanged
 
     private void UpdateLogContent()
     {
-        if (File.Exists(_logPath))
+        if (!File.Exists(_logPath)) return;
+        try
         {
-            var lines = File.ReadLines(_logPath).TakeLast(20);
+            using var stream = new FileStream(_logPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var reader = new StreamReader(stream);
+            var lines = reader
+                .ReadToEnd()
+                .Split(Environment.NewLine)
+                .TakeLast(20);
             LogContent = string.Join(Environment.NewLine, lines);
+        }
+        catch (IOException ex)
+        {
+            // Log or handle the exception as needed
+            LogContent = "Unable to read log content: " + ex.Message;
         }
     }
 
