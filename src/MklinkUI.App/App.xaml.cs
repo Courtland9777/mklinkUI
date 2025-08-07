@@ -17,6 +17,8 @@ public partial class App : Application
             .CreateLogger();
 
         Log.Information("Application starting");
+
+        InitializeComponent();
     }
 
     protected override void OnExit(ExitEventArgs e)
