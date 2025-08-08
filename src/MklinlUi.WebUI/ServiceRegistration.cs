@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.IO;
 using Microsoft.Extensions.DependencyInjection;
 using MklinlUi.Core;
@@ -9,26 +10,39 @@ public static class ServiceRegistration
 {
     public static void AddPlatformServices(this IServiceCollection services)
     {
-        string assemblyName = OperatingSystem.IsWindows() ? "MklinlUi.Windows" : "MklinlUi.Fakes";
+        string assemblyFile = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "MklinlUi.Windows.dll"
+            : "MklinlUi.Fakes.dll";
+        string assemblyPath = Path.Combine(AppContext.BaseDirectory, assemblyFile);
+        Type? devType = null;
+        Type? symType = null;
         try
         {
-            var assembly = Assembly.Load(assemblyName);
-            var devType = assembly.GetTypes().FirstOrDefault(t => typeof(IDeveloperModeService).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract);
-            var symType = assembly.GetTypes().FirstOrDefault(t => typeof(ISymlinkService).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract);
-            if (devType != null)
-            {
-                services.AddSingleton(typeof(IDeveloperModeService), devType);
-            }
-            if (symType != null)
-            {
-                services.AddSingleton(typeof(ISymlinkService), symType);
-            }
+            var assembly = Assembly.LoadFrom(assemblyPath);
+            devType = assembly.GetTypes().FirstOrDefault(t => typeof(IDeveloperModeService).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract);
+            symType = assembly.GetTypes().FirstOrDefault(t => typeof(ISymlinkService).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Failed to load {assemblyName}: {ex.Message}");
-            services.AddSingleton<IDeveloperModeService, DefaultDeveloperModeService>();
-            services.AddSingleton<ISymlinkService, DefaultSymlinkService>();
+            Console.WriteLine($"Failed to load {assemblyPath}: {ex.Message}");
+        }
+
+        if (devType != null && Activator.CreateInstance(devType) is IDeveloperModeService devInstance)
+        {
+            services.AddSingleton<IDeveloperModeService>(devInstance);
+        }
+        else
+        {
+            services.AddSingleton<IDeveloperModeService>(new DefaultDeveloperModeService());
+        }
+
+        if (symType != null && Activator.CreateInstance(symType) is ISymlinkService symInstance)
+        {
+            services.AddSingleton<ISymlinkService>(symInstance);
+        }
+        else
+        {
+            services.AddSingleton<ISymlinkService>(new DefaultSymlinkService());
         }
     }
 

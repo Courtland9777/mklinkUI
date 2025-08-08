@@ -8,6 +8,19 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MklinlUi.Core\MklinlUi.Core.csproj" />
+    <ProjectReference Include="..\MklinlUi.Fakes\MklinlUi.Fakes.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\MklinlUi.Windows\MklinlUi.Windows.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\MklinlUi.Fakes\bin\$(Configuration)\net8.0\MklinlUi.Fakes.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    </Content>
+    <Content Include="..\MklinlUi.Windows\bin\$(Configuration)\net8.0\MklinlUi.Windows.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>
