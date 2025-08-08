@@ -9,7 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="..\MklinlUi.Core\MklinlUi.Core.csproj" />
     <ProjectReference Include="..\MklinlUi.Fakes\MklinlUi.Fakes.csproj" ReferenceOutputAssembly="false" />
-    <ProjectReference Include="..\MklinlUi.Windows\MklinlUi.Windows.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\MklinlUi.Windows\MklinlUi.Windows.csproj" ReferenceOutputAssembly="false" SkipGetTargetFrameworkProperties="true" />
   </ItemGroup>
 
   <ItemGroup>
@@ -17,7 +17,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>Always</CopyToPublishDirectory>
     </Content>
-    <Content Include="..\MklinlUi.Windows\bin\$(Configuration)\net8.0\MklinlUi.Windows.dll">
+    <Content Include="..\MklinlUi.Windows\bin\$(Configuration)\net8.0-windows\MklinlUi.Windows.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>Always</CopyToPublishDirectory>
     </Content>
