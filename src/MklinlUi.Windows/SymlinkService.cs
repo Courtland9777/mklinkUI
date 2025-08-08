@@ -1,3 +1,6 @@
+using System.ComponentModel;
+using System.Runtime.InteropServices;
+using System.IO;
 using MklinlUi.Core;
 
 namespace MklinlUi.Windows;
@@ -9,21 +12,23 @@ public class SymlinkService : ISymlinkService
 {
     public Task<SymlinkResult> CreateSymlinkAsync(string linkPath, string targetPath, CancellationToken cancellationToken = default)
     {
-        try
+        var flags = Directory.Exists(targetPath) ? SymbolicLinkFlag.Directory : SymbolicLinkFlag.File;
+        if (CreateSymbolicLink(linkPath, targetPath, flags))
         {
-            if (Directory.Exists(targetPath))
-            {
-                Directory.CreateSymbolicLink(linkPath, targetPath);
-            }
-            else
-            {
-                File.CreateSymbolicLink(linkPath, targetPath);
-            }
             return Task.FromResult(new SymlinkResult(true));
         }
-        catch (Exception ex)
-        {
-            return Task.FromResult(new SymlinkResult(false, ex.Message));
-        }
+
+        var error = Marshal.GetLastWin32Error();
+        var message = new Win32Exception(error).Message;
+        return Task.FromResult(new SymlinkResult(false, message));
+    }
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern bool CreateSymbolicLink(string lpSymlinkFileName, string lpTargetFileName, SymbolicLinkFlag dwFlags);
+
+    private enum SymbolicLinkFlag : uint
+    {
+        File = 0,
+        Directory = 1
     }
 }

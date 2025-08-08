@@ -1,7 +1,6 @@
 using FluentAssertions;
 using Moq;
 using MklinlUi.Core;
-using MklinlUi.Fakes;
 using Xunit;
 
 namespace MklinlUi.Tests;
@@ -11,15 +10,18 @@ public class SymlinkManagerTests
     [Fact]
     public async Task CreateSymlinkAsync_returns_failure_when_developer_mode_disabled()
     {
-        var devService = new FakeDeveloperModeService { Enabled = false };
-        var symlinkService = new FakeSymlinkService();
-        var manager = new SymlinkManager(devService, symlinkService);
+        var devService = new Mock<IDeveloperModeService>();
+        devService.Setup(d => d.IsEnabledAsync(It.IsAny<CancellationToken>())).ReturnsAsync(false);
+
+        var symlinkService = new Mock<ISymlinkService>();
+
+        var manager = new SymlinkManager(devService.Object, symlinkService.Object);
 
         var result = await manager.CreateSymlinkAsync("/link", "/target");
 
         result.Success.Should().BeFalse();
         result.ErrorMessage.Should().Be("Developer mode not enabled.");
-        symlinkService.Created.Should().BeEmpty();
+        symlinkService.Verify(s => s.CreateSymlinkAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
