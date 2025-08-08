@@ -3,11 +3,14 @@ using MklinlUi.Core;
 namespace MklinlUi.Fakes;
 
 /// <summary>
-/// Fake implementation of <see cref="ISymlinkService"/> that records created links.
+/// Records symlink requests without touching the file system.
 /// </summary>
-public class FakeSymlinkService : ISymlinkService
+public sealed class FakeSymlinkService : ISymlinkService
 {
-    public List<(string linkPath, string targetPath)> Created { get; } = new();
+    /// <summary>
+    /// Gets all link/target pairs passed to <see cref="CreateSymlinkAsync"/>.
+    /// </summary>
+    public List<(string linkPath, string targetPath)> Created { get; } = [];
 
     public Task<SymlinkResult> CreateSymlinkAsync(string linkPath, string targetPath, CancellationToken cancellationToken = default)
     {
@@ -15,3 +18,4 @@ public class FakeSymlinkService : ISymlinkService
         return Task.FromResult(new SymlinkResult(true));
     }
 }
+

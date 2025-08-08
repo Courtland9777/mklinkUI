@@ -3,15 +3,16 @@ using MklinlUi.Core;
 namespace MklinlUi.Fakes;
 
 /// <summary>
-/// Fake implementation of <see cref="IDeveloperModeService"/> for tests and non-Windows environments.
+/// Test double for <see cref="IDeveloperModeService"/>.
 /// </summary>
-public class FakeDeveloperModeService : IDeveloperModeService
+public sealed class FakeDeveloperModeService : IDeveloperModeService
 {
     /// <summary>
-    /// Gets or sets a value indicating whether developer mode is enabled.
+    /// Controls the value returned by <see cref="IsEnabledAsync"/>. Defaults to <c>true</c>.
     /// </summary>
-    public bool Enabled { get; set; }
+    public bool Enabled { get; set; } = true;
 
+    /// <inheritdoc />
     public Task<bool> IsEnabledAsync(CancellationToken cancellationToken = default)
         => Task.FromResult(Enabled);
 }

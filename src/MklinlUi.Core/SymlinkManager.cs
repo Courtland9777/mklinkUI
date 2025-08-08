@@ -3,16 +3,10 @@ namespace MklinlUi.Core;
 /// <summary>
 /// Coordinates symbolic link creation using provided services.
 /// </summary>
-public class SymlinkManager
+public class SymlinkManager(IDeveloperModeService developerModeService, ISymlinkService symlinkService)
 {
-    private readonly IDeveloperModeService _developerModeService;
-    private readonly ISymlinkService _symlinkService;
-
-    public SymlinkManager(IDeveloperModeService developerModeService, ISymlinkService symlinkService)
-    {
-        _developerModeService = developerModeService;
-        _symlinkService = symlinkService;
-    }
+    private readonly IDeveloperModeService _developerModeService = developerModeService;
+    private readonly ISymlinkService _symlinkService = symlinkService;
 
     /// <summary>
     /// Creates a symbolic link if developer mode is enabled.
@@ -21,9 +15,10 @@ public class SymlinkManager
     {
         if (!await _developerModeService.IsEnabledAsync(cancellationToken).ConfigureAwait(false))
         {
-            return new SymlinkResult(false, "Developer mode not enabled.");
+            return new(false, "Developer mode not enabled.");
         }
 
         return await _symlinkService.CreateSymlinkAsync(linkPath, targetPath, cancellationToken).ConfigureAwait(false);
     }
 }
+
