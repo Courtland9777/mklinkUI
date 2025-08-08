@@ -8,6 +8,8 @@ public static class ServiceRegistration
 {
     public static IServiceCollection AddPlatformServices(this IServiceCollection services)
     {
+        ArgumentNullException.ThrowIfNull(services);
+
         var assemblyName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "MklinlUi.Windows.dll"
             : "MklinlUi.Fakes.dll";
@@ -23,6 +25,8 @@ public static class ServiceRegistration
 
     private static (IDeveloperModeService dev, ISymlinkService sym) TryLoadServices(string assemblyPath)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(assemblyPath);
+
         try
         {
             if (File.Exists(assemblyPath))
@@ -30,7 +34,8 @@ public static class ServiceRegistration
                 var assembly = Assembly.LoadFrom(assemblyPath);
                 var dev = Create<IDeveloperModeService>(assembly);
                 var sym = Create<ISymlinkService>(assembly);
-                if (dev != null && sym != null) return (dev, sym);
+                if (dev != null && sym != null)
+                    return (dev, sym);
             }
         }
         catch (Exception ex)
@@ -50,10 +55,7 @@ public static class ServiceRegistration
 
     private sealed class DefaultDeveloperModeService : IDeveloperModeService
     {
-        public Task<bool> IsEnabledAsync(CancellationToken cancellationToken = default)
-        {
-            return Task.FromResult(true);
-        }
+        public Task<bool> IsEnabledAsync(CancellationToken cancellationToken = default) => Task.FromResult(true);
     }
 
     private sealed class DefaultSymlinkService : ISymlinkService
@@ -61,6 +63,9 @@ public static class ServiceRegistration
         public Task<SymlinkResult> CreateSymlinkAsync(string linkPath, string targetPath,
             CancellationToken cancellationToken = default)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(linkPath);
+            ArgumentException.ThrowIfNullOrWhiteSpace(targetPath);
+
             try
             {
                 if (Directory.Exists(targetPath))

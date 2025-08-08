@@ -10,6 +10,8 @@ public sealed class DeveloperModeService : IDeveloperModeService
 {
     public Task<bool> IsEnabledAsync(CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         if (!OperatingSystem.IsWindows())
         {
             return Task.FromResult(false);

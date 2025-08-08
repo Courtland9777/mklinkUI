@@ -14,5 +14,8 @@ public sealed class FakeDeveloperModeService : IDeveloperModeService
 
     /// <inheritdoc />
     public Task<bool> IsEnabledAsync(CancellationToken cancellationToken = default)
-        => Task.FromResult(Enabled);
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(Enabled);
+    }
 }
