@@ -19,13 +19,15 @@
         <form method="post">
             <div class="mb-3">
                 <label class="form-label" asp-for="LinkType">Symlink Type</label>
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" asp-for="LinkType" value="File" id="linkTypeFile" />
-                    <label class="form-check-label" for="linkTypeFile">File</label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" asp-for="LinkType" value="Folder" id="linkTypeFolder" />
-                    <label class="form-check-label" for="linkTypeFolder">Folder</label>
+                <div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" asp-for="LinkType" value="File" id="linkTypeFile" />
+                        <label class="form-check-label" for="linkTypeFile">File</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" asp-for="LinkType" value="Folder" id="linkTypeFolder" />
+                        <label class="form-check-label" for="linkTypeFolder">Folder</label>
+                    </div>
                 </div>
             </div>
 
