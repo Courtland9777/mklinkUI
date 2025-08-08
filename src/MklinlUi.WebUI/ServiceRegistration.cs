@@ -43,7 +43,7 @@ public static class ServiceRegistration
         static T? Create<T>(Assembly assembly) where T : class
         {
             var type = assembly.GetTypes()
-                .FirstOrDefault(t => typeof(T).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract);
+                .FirstOrDefault(t => typeof(T).IsAssignableFrom(t) && t is { IsInterface: false, IsAbstract: false });
             return type is not null ? Activator.CreateInstance(type) as T : null;
         }
     }
