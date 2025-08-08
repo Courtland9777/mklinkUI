@@ -4,42 +4,47 @@
     ViewData["Title"] = "Symlink Creator";
 }
 
-<h2 class="mb-4">Symlink Creator</h2>
+<div class="card mb-4">
+    <div class="card-header">
+        <h2 class="m-0"><i class="fa-solid fa-link"></i> Symlink Creator</h2>
+    </div>
+    <div class="card-body">
+        <div class="mb-3">
+            <label class="form-label">Developer Mode:</label>
+            <span class="fw-bold @(Model.DeveloperModeEnabled ? "text-success" : "text-danger")">
+                @(Model.DeveloperModeEnabled ? "Enabled" : "Disabled")
+            </span>
+        </div>
 
-<div class="mb-3">
-    <label class="form-label">Developer Mode:</label>
-    <span class="fw-bold @(Model.DeveloperModeEnabled ? "text-success" : "text-danger")">
-        @(Model.DeveloperModeEnabled ? "Enabled" : "Disabled")
-    </span>
+        <form method="post">
+            <div class="mb-3">
+                <label class="form-label" asp-for="SourcePath">Source Path</label>
+                <div class="input-group">
+                    <input class="form-control" id="sourcePath" asp-for="SourcePath" />
+                    <button type="button" class="btn btn-outline-secondary" onclick="browseFile('sourcePath')"><i class="fa-solid fa-file me-1"></i>Browse</button>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label" asp-for="DestinationPath">Destination Path</label>
+                <div class="input-group">
+                    <input class="form-control" id="destPath" asp-for="DestinationPath" />
+                    <button type="button" class="btn btn-outline-secondary" onclick="browseFolder('destPath')"><i class="fa-solid fa-folder-open me-1"></i>Browse</button>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label" asp-for="LinkType">Symlink Type</label>
+                <select class="form-select" asp-for="LinkType">
+                    <option value="File">File</option>
+                    <option value="Folder">Folder</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-play me-1"></i>Create Symlink</button>
+        </form>
+    </div>
 </div>
-
-<form method="post">
-    <div class="mb-3">
-        <label class="form-label" asp-for="SourcePath">Source Path</label>
-        <div class="input-group">
-            <input class="form-control" id="sourcePath" asp-for="SourcePath" />
-            <button type="button" class="btn btn-outline-secondary" onclick="browseFile('sourcePath')">Browse</button>
-        </div>
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label" asp-for="DestinationPath">Destination Path</label>
-        <div class="input-group">
-            <input class="form-control" id="destPath" asp-for="DestinationPath" />
-            <button type="button" class="btn btn-outline-secondary" onclick="browseFolder('destPath')">Browse</button>
-        </div>
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label" asp-for="LinkType">Symlink Type</label>
-        <select class="form-select" asp-for="LinkType">
-            <option value="File">File</option>
-            <option value="Folder">Folder</option>
-        </select>
-    </div>
-
-    <button type="submit" class="btn btn-primary">Create Symlink</button>
-</form>
 
 @if (Model.Success.HasValue)
 {

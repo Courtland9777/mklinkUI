@@ -1,26 +1,3 @@
-// Theme toggle
-(function () {
-    const select = document.getElementById('theme-select');
-    if (!select) return;
-
-    const setTheme = (theme) => {
-        if (theme === 'system') {
-            document.body.removeAttribute('data-theme');
-        } else {
-            document.body.setAttribute('data-theme', theme);
-        }
-        localStorage.setItem('theme', theme);
-    };
-
-    const stored = localStorage.getItem('theme') || 'system';
-    select.value = stored;
-    setTheme(stored);
-
-    select.addEventListener('change', (e) => {
-        setTheme(e.target.value);
-    });
-})();
-
 // File and folder browsers
 async function browseFile(inputId) {
     if (window.showOpenFilePicker) {
