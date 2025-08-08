@@ -1,27 +1,20 @@
+using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using MklinlUi.Core;
 
 namespace MklinlUi.WebUI.Pages;
 
-public class IndexModel : PageModel
+public sealed class IndexModel(SymlinkManager manager, IDeveloperModeService developerModeService) : PageModel
 {
-    private readonly SymlinkManager _manager;
-    private readonly IDeveloperModeService _developerModeService;
-
-    public IndexModel(SymlinkManager manager, IDeveloperModeService developerModeService)
-    {
-        _manager = manager;
-        _developerModeService = developerModeService;
-    }
 
     [BindProperty]
     public string LinkType { get; set; } = "File";
 
-    [BindProperty]
+    [BindProperty, Required]
     public string SourcePath { get; set; } = string.Empty;
 
-    [BindProperty]
+    [BindProperty, Required]
     public string DestinationPath { get; set; } = string.Empty;
 
     public bool DeveloperModeEnabled { get; private set; }
@@ -31,13 +24,20 @@ public class IndexModel : PageModel
 
     public async Task OnGetAsync()
     {
-        DeveloperModeEnabled = await _developerModeService.IsEnabledAsync();
+        DeveloperModeEnabled = await developerModeService.IsEnabledAsync();
     }
 
     public async Task<IActionResult> OnPostAsync()
     {
-        DeveloperModeEnabled = await _developerModeService.IsEnabledAsync();
-        var result = await _manager.CreateSymlinkAsync(DestinationPath, SourcePath);
+        if (!ModelState.IsValid)
+        {
+            Success = false;
+            Message = "Source and destination paths are required.";
+            return Page();
+        }
+
+        DeveloperModeEnabled = await developerModeService.IsEnabledAsync();
+        var result = await manager.CreateSymlinkAsync(DestinationPath, SourcePath);
         Success = result.Success;
         Message = result.Success ? "Symlink created successfully." : result.ErrorMessage;
         return Page();
