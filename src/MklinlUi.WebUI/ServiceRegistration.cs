@@ -1,6 +1,7 @@
-using System.Reflection;
-using System.Runtime.InteropServices;
 using MklinlUi.Core;
+#if WINDOWS
+using MklinlUi.Windows;
+#endif
 
 namespace MklinlUi.WebUI;
 
@@ -8,52 +9,23 @@ public static class ServiceRegistration
 {
     public static IServiceCollection AddPlatformServices(this IServiceCollection services)
     {
-        var assemblyName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-            ? "MklinlUi.Windows.dll"
-            : "MklinlUi.Fakes.dll";
-        var assemblyPath = Path.Combine(AppContext.BaseDirectory, assemblyName);
-
-        var (dev, sym) = TryLoadServices(assemblyPath);
-
-        services.AddSingleton(dev);
-        services.AddSingleton(sym);
-
+#if WINDOWS
+        if (OperatingSystem.IsWindows())
+        {
+            services.AddSingleton<IDeveloperModeService, DeveloperModeService>();
+            services.AddSingleton<ISymlinkService, SymlinkService>();
+            return services;
+        }
+#endif
+        services.AddSingleton<IDeveloperModeService, DefaultDeveloperModeService>();
+        services.AddSingleton<ISymlinkService, DefaultSymlinkService>();
         return services;
-    }
-
-    private static (IDeveloperModeService dev, ISymlinkService sym) TryLoadServices(string assemblyPath)
-    {
-        try
-        {
-            if (File.Exists(assemblyPath))
-            {
-                var assembly = Assembly.LoadFrom(assemblyPath);
-                var dev = Create<IDeveloperModeService>(assembly);
-                var sym = Create<ISymlinkService>(assembly);
-                if (dev != null && sym != null) return (dev, sym);
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Failed to load {assemblyPath}: {ex.Message}");
-        }
-
-        return (new DefaultDeveloperModeService(), new DefaultSymlinkService());
-
-        static T? Create<T>(Assembly assembly) where T : class
-        {
-            var type = assembly.GetTypes()
-                .FirstOrDefault(t => typeof(T).IsAssignableFrom(t) && t is { IsInterface: false, IsAbstract: false });
-            return type is not null ? Activator.CreateInstance(type) as T : null;
-        }
     }
 
     private sealed class DefaultDeveloperModeService : IDeveloperModeService
     {
         public Task<bool> IsEnabledAsync(CancellationToken cancellationToken = default)
-        {
-            return Task.FromResult(true);
-        }
+            => Task.FromResult(true);
     }
 
     private sealed class DefaultSymlinkService : ISymlinkService
@@ -77,3 +49,4 @@ public static class ServiceRegistration
         }
     }
 }
+
