@@ -1,7 +1,5 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.IO;
-using Microsoft.Extensions.DependencyInjection;
 using MklinlUi.Core;
 
 namespace MklinlUi.WebUI;
@@ -32,10 +30,7 @@ public static class ServiceRegistration
                 var assembly = Assembly.LoadFrom(assemblyPath);
                 var dev = Create<IDeveloperModeService>(assembly);
                 var sym = Create<ISymlinkService>(assembly);
-                if (dev != null && sym != null)
-                {
-                    return (dev, sym);
-                }
+                if (dev != null && sym != null) return (dev, sym);
             }
         }
         catch (Exception ex)
@@ -47,30 +42,31 @@ public static class ServiceRegistration
 
         static T? Create<T>(Assembly assembly) where T : class
         {
-            var type = assembly.GetTypes().FirstOrDefault(t => typeof(T).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract);
+            var type = assembly.GetTypes()
+                .FirstOrDefault(t => typeof(T).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract);
             return type is not null ? Activator.CreateInstance(type) as T : null;
         }
     }
 
     private sealed class DefaultDeveloperModeService : IDeveloperModeService
     {
-        public Task<bool> IsEnabledAsync(CancellationToken cancellationToken = default) => Task.FromResult(true);
+        public Task<bool> IsEnabledAsync(CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(true);
+        }
     }
 
     private sealed class DefaultSymlinkService : ISymlinkService
     {
-        public Task<SymlinkResult> CreateSymlinkAsync(string linkPath, string targetPath, CancellationToken cancellationToken = default)
+        public Task<SymlinkResult> CreateSymlinkAsync(string linkPath, string targetPath,
+            CancellationToken cancellationToken = default)
         {
             try
             {
                 if (Directory.Exists(targetPath))
-                {
                     Directory.CreateSymbolicLink(linkPath, targetPath);
-                }
                 else
-                {
                     File.CreateSymbolicLink(linkPath, targetPath);
-                }
 
                 return Task.FromResult(new SymlinkResult(true));
             }
@@ -81,4 +77,3 @@ public static class ServiceRegistration
         }
     }
 }
-
