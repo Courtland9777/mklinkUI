@@ -6,7 +6,7 @@ namespace MklinlUi.Windows;
 /// <summary>
 /// Windows implementation of <see cref="IDeveloperModeService"/>.
 /// </summary>
-public class DeveloperModeService : IDeveloperModeService
+public sealed class DeveloperModeService : IDeveloperModeService
 {
     public Task<bool> IsEnabledAsync(CancellationToken cancellationToken = default)
     {

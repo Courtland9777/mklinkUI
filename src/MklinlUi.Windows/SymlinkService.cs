@@ -8,7 +8,7 @@ namespace MklinlUi.Windows;
 /// <summary>
 /// Windows implementation of <see cref="ISymlinkService"/>.
 /// </summary>
-public class SymlinkService : ISymlinkService
+public sealed class SymlinkService : ISymlinkService
 {
     public Task<SymlinkResult> CreateSymlinkAsync(string linkPath, string targetPath, CancellationToken cancellationToken = default)
     {
