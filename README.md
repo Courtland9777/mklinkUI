@@ -6,29 +6,39 @@ MklinkUI is a small web-based utility that reports whether Windows Developer Mod
 The solution (`MklinlUi.sln`) is composed of several projects, each with a distinct responsibility:
 
 - `src/MklinlUi.Core` – cross-platform abstractions and the `SymlinkManager` coordinator.
-- `src/MklinlUi.Windows` – Windows-only services that read the registry and invoke the Win32 `CreateSymbolicLink` API. The project is only built on Windows hosts so the rest of the solution can compile elsewhere.
-- `src/MklinlUi.Fakes` – test double implementations used by the unit tests.
-- `src/MklinlUi.WebUI` – ASP.NET Core front end that registers Windows services when built on Windows and otherwise uses in-project defaults.
+- `src/MklinlUi.Windows` – Windows-only services that read the registry and invoke the Win32 `CreateSymbolicLink` API. The project requires the Windows Desktop SDK and is built only on Windows.
+- `src/MklinlUi.Fakes` – stub implementations used for development and tests on non-Windows hosts.
+- `src/MklinlUi.WebUI` – ASP.NET Core front end that loads either `MklinlUi.Windows.dll` or `MklinlUi.Fakes.dll` at runtime.
 - `tests/MklinlUi.Tests` – xUnit tests using FluentAssertions and Moq.
 
 ## Platform-specific service registration
-`ServiceRegistration.AddPlatformServices` uses dependency injection to register platform services. When the app is built on Windows, the real implementations from `MklinlUi.Windows` are added. On other operating systems the WebUI falls back to built-in default services that rely on the cross-platform `File.CreateSymbolicLink` API and assume Developer Mode is enabled.
+`ServiceRegistration.AddPlatformServices` checks the current OS and loads `MklinlUi.Windows.dll` or `MklinlUi.Fakes.dll` from the application directory using reflection. If neither assembly is found, basic default services are used that rely on the cross-platform `File.CreateSymbolicLink` API and assume Developer Mode is enabled.
 
 ## Building
-Build the WebUI on any platform:
+### Non-Windows development
+Build the fake services and then the web app:
 
 ```bash
+dotnet build src/MklinlUi.Fakes
 dotnet build src/MklinlUi.WebUI
 ```
 
-On Windows the build also compiles `MklinlUi.Windows` to provide the real services. On non-Windows hosts the project is skipped and the default implementations are used.
+### Windows production
+Build the real Windows services and then the web app:
+
+```bash
+dotnet build src/MklinlUi.Windows
+dotnet build src/MklinlUi.WebUI
+```
+
+The WebUI project copies any of the above DLLs that exist into its output folder. At runtime it loads `MklinlUi.Windows.dll` when present; otherwise it uses the fake or default implementations.
 
 ## Build and run with Visual Studio 2022
 1. Open `MklinlUi.sln` in **Visual Studio 2022**.
 2. Set **MklinlUi.WebUI** as the startup project.
 3. Press **F5** to build and launch the web app.
 
-When running on Windows, `MklinlUi.Windows` is referenced and its services are registered automatically. On other platforms the app compiles and runs without the Windows Desktop SDK by using the fallback services.
+When running on Windows and `MklinlUi.Windows.dll` is present, its services are used automatically. On other platforms the app runs with the fake or built-in default services and does not require the Windows Desktop SDK.
 
 ### Command line
 Alternatively, use the .NET CLI:

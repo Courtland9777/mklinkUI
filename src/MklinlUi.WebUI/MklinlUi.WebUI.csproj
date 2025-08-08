@@ -10,13 +10,18 @@
     <ProjectReference Include="..\MklinlUi.Core\MklinlUi.Core.csproj" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(OS)' == 'Windows_NT'">
-    <ProjectReference Include="..\MklinlUi.Windows\MklinlUi.Windows.csproj" />
+  <ItemGroup>
+    <Content Include="..\MklinlUi.Fakes\bin\$(Configuration)\net8.0\MklinlUi.Fakes.dll"
+             Condition="Exists('..\MklinlUi.Fakes\bin\$(Configuration)\net8.0\MklinlUi.Fakes.dll')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    </Content>
+    <Content Include="..\MklinlUi.Windows\bin\$(Configuration)\net8.0-windows\MklinlUi.Windows.dll"
+             Condition="Exists('..\MklinlUi.Windows\bin\$(Configuration)\net8.0-windows\MklinlUi.Windows.dll')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    </Content>
   </ItemGroup>
-
-  <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
-    <DefineConstants>WINDOWS</DefineConstants>
-  </PropertyGroup>
 
 </Project>
 
