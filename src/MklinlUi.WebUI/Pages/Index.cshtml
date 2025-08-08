@@ -1,0 +1,49 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Symlink Creator";
+}
+
+<h2 class="mb-4">Symlink Creator</h2>
+
+<div class="mb-3">
+    <label class="form-label">Developer Mode:</label>
+    <span class="fw-bold @(Model.DeveloperModeEnabled ? "text-success" : "text-danger")">
+        @(Model.DeveloperModeEnabled ? "Enabled" : "Disabled")
+    </span>
+</div>
+
+<form method="post">
+    <div class="mb-3">
+        <label class="form-label" asp-for="SourcePath">Source Path</label>
+        <div class="input-group">
+            <input class="form-control" id="sourcePath" asp-for="SourcePath" />
+            <button type="button" class="btn btn-outline-secondary" onclick="browseFile('sourcePath')">Browse</button>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label" asp-for="DestinationPath">Destination Path</label>
+        <div class="input-group">
+            <input class="form-control" id="destPath" asp-for="DestinationPath" />
+            <button type="button" class="btn btn-outline-secondary" onclick="browseFolder('destPath')">Browse</button>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label" asp-for="LinkType">Symlink Type</label>
+        <select class="form-select" asp-for="LinkType">
+            <option value="File">File</option>
+            <option value="Folder">Folder</option>
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Create Symlink</button>
+</form>
+
+@if (Model.Success.HasValue)
+{
+    <div class="alert @(Model.Success.Value ? "alert-success" : "alert-danger") mt-3" role="alert">
+        @Model.Message
+    </div>
+}
