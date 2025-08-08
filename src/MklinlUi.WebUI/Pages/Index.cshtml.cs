@@ -16,13 +16,13 @@ public class IndexModel : PageModel
     }
 
     [BindProperty]
+    public string LinkType { get; set; } = "File";
+
+    [BindProperty]
     public string SourcePath { get; set; } = string.Empty;
 
     [BindProperty]
     public string DestinationPath { get; set; } = string.Empty;
-
-    [BindProperty]
-    public string LinkType { get; set; } = "File";
 
     public bool DeveloperModeEnabled { get; private set; }
 
