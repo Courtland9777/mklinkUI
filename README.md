@@ -10,6 +10,7 @@ The solution (`MklinlUi.sln`) is composed of several projects, each with a disti
 - `src/MklinlUi.Fakes` – stub implementations used for development and tests on non-Windows hosts.
 - `src/MklinlUi.WebUI` – ASP.NET Core front end that loads either `MklinlUi.Windows.dll` or `MklinlUi.Fakes.dll` at runtime.
 - `tests/MklinlUi.Tests` – xUnit tests using FluentAssertions and Moq.
+- `tests/MklinlUi.Windows.Tests` – Windows-only tests for the real symlink service.
 
 ## Platform-specific service registration
 `ServiceRegistration.AddPlatformServices` checks the current OS and loads `MklinlUi.Windows.dll` or `MklinlUi.Fakes.dll` from the application directory using reflection. If neither assembly is found, basic default services are used that rely on the cross-platform `File.CreateSymbolicLink` API and assume Developer Mode is enabled.
@@ -66,4 +67,12 @@ The published files are in `src/MklinlUi.WebUI/bin/Release/net8.0/publish`.
 - The web UI is minimal and lacks comprehensive error handling.
 - On non-Windows platforms, the developer mode check always reports enabled.
 - Creating symbolic links may require elevated privileges or Windows Developer Mode.
+
+## Web interface
+
+The dark-themed web interface centers its main card on screen for common desktop resolutions. When creating file links you can paste or list multiple source files and select a destination folder. Each file is linked into the folder using its original file name.
+
+## Ports
+
+By default the app attempts to bind to HTTP port **5280** (and HTTPS **5281** when a certificate is configured). If the port is in use it probes the range 5280–5299 for the first free port. Override with the `ASPNETCORE_URLS` environment variable or `Server:Port` in `appsettings.json`.
 
