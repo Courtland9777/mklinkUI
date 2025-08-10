@@ -42,7 +42,7 @@ public class FileBatchSymlinkTests
         var service = new FakeSymlinkService();
         var manager = new SymlinkManager(new FakeDeveloperModeService(), service);
 
-        var results = await manager.CreateFileSymlinksAsync(new[] { "" }, "/dest");
+        var results = await manager.CreateFileSymlinksAsync([string.Empty], "/dest");
 
         results.Should().HaveCount(1);
         results[0].Success.Should().BeFalse();

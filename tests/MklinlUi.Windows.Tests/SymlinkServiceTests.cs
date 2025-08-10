@@ -1,8 +1,9 @@
 #if WINDOWS
-using FluentAssertions;
-using MklinlUi.Windows;
-using Xunit;
+using System;
 using System.IO;
+using System.Threading.Tasks;
+using FluentAssertions;
+using Xunit;
 
 namespace MklinlUi.Windows.Tests;
 
@@ -19,7 +20,7 @@ public class SymlinkServiceTests
         var dest = Path.Combine(temp, "links");
         Directory.CreateDirectory(dest);
 
-        var results = await service.CreateFileSymlinksAsync(new[] { source }, dest);
+        var results = await service.CreateFileSymlinksAsync([source], dest);
 
         results.Should().HaveCount(1);
         results[0].Success.Should().BeTrue();
