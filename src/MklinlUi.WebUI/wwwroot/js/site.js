@@ -33,3 +33,17 @@ async function browseFolder(inputId) {
     };
     input.click();
 }
+
+function toggleInputs() {
+    const isFile = document.getElementById('linkTypeFile').checked;
+    document.getElementById('fileInputs').style.display = isFile ? 'block' : 'none';
+    document.getElementById('fileDest').style.display = isFile ? 'block' : 'none';
+    document.getElementById('folderSource').style.display = isFile ? 'none' : 'block';
+    document.getElementById('folderDest').style.display = isFile ? 'none' : 'block';
+}
+
+window.addEventListener('load', () => {
+    document.getElementById('linkTypeFile').addEventListener('change', toggleInputs);
+    document.getElementById('linkTypeFolder').addEventListener('change', toggleInputs);
+    toggleInputs();
+});

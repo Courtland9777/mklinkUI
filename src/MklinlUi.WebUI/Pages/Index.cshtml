@@ -30,15 +30,28 @@
                     </div>
                 </div>
             </div>
-            <div class="mb-3">
-                <label class="form-label" asp-for="SourcePath">Source Path</label>
+            <div class="mb-3" id="fileInputs">
+                <label class="form-label" asp-for="SourceFilesInput">Source Files (one per line)</label>
+                <textarea class="form-control" asp-for="SourceFilesInput"></textarea>
+            </div>
+
+            <div class="mb-3" id="fileDest">
+                <label class="form-label" asp-for="DestinationFolder">Destination Folder</label>
                 <div class="input-group">
-                    <input class="form-control" id="sourcePath" asp-for="SourcePath" />
-                    <button type="button" class="btn btn-outline-secondary" onclick="browseFile('sourcePath')"><i class="fa-solid fa-file me-1"></i>Browse</button>
+                    <input class="form-control" id="destFolder" asp-for="DestinationFolder" />
+                    <button type="button" class="btn btn-outline-secondary" onclick="browseFolder('destFolder')"><i class="fa-solid fa-folder-open me-1"></i>Browse</button>
                 </div>
             </div>
 
-            <div class="mb-3">
+            <div class="mb-3" id="folderSource">
+                <label class="form-label" asp-for="SourcePath">Source Path</label>
+                <div class="input-group">
+                    <input class="form-control" id="sourcePath" asp-for="SourcePath" />
+                    <button type="button" class="btn btn-outline-secondary" onclick="browseFolder('sourcePath')"><i class="fa-solid fa-folder-open me-1"></i>Browse</button>
+                </div>
+            </div>
+
+            <div class="mb-3" id="folderDest">
                 <label class="form-label" asp-for="DestinationPath">Destination Path</label>
                 <div class="input-group">
                     <input class="form-control" id="destPath" asp-for="DestinationPath" />
