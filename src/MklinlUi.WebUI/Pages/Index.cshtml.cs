@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using MklinlUi.Core;
@@ -8,7 +9,7 @@ public sealed class IndexModel(SymlinkManager manager, IDeveloperModeService dev
 {
     [BindProperty] public string LinkType { get; set; } = "File";
 
-    [BindProperty] public string SourceFilesInput { get; set; } = string.Empty;
+    [BindProperty] public List<IFormFile> SourceFiles { get; set; } = [];
 
     [BindProperty] public string DestinationFolder { get; set; } = string.Empty;
 
@@ -45,8 +46,8 @@ public sealed class IndexModel(SymlinkManager manager, IDeveloperModeService dev
             return Page();
         }
 
-        var sourceFiles = SourceFilesInput
-            .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+        var sourceFiles = SourceFiles
+            .Select(f => f.FileName)
             .ToList();
         if (sourceFiles.Count == 0 || string.IsNullOrWhiteSpace(DestinationFolder))
         {
