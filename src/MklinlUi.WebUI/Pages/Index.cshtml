@@ -16,7 +16,7 @@
             </span>
         </div>
 
-        <form method="post">
+        <form method="post" enctype="multipart/form-data">
             <div class="mb-3">
                 <label class="form-label" asp-for="LinkType">Symlink Type</label>
                 <div>
@@ -31,8 +31,8 @@
                 </div>
             </div>
             <div class="mb-3" id="fileInputs">
-                <label class="form-label" asp-for="SourceFilesInput">Source Files (one per line)</label>
-                <textarea class="form-control" asp-for="SourceFilesInput"></textarea>
+                <label class="form-label" asp-for="SourceFiles">Source Files</label>
+                <input class="form-control" asp-for="SourceFiles" type="file" multiple />
             </div>
 
             <div class="mb-3" id="fileDest">
