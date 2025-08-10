@@ -1,5 +1,4 @@
 using MklinlUi.Core;
-using Serilog;
 
 namespace MklinlUi.Windows;
 
@@ -49,7 +48,6 @@ public sealed class SymlinkService : ISymlinkService
 
             if (File.Exists(link) || Directory.Exists(link))
             {
-                Log.Warning("Link already exists for {Link}", link);
                 results.Add(new SymlinkResult(false, "Link already exists."));
                 continue;
             }
@@ -57,12 +55,10 @@ public sealed class SymlinkService : ISymlinkService
             try
             {
                 File.CreateSymbolicLink(link, source);
-                Log.Information("Created link {Link} -> {Target}", link, source);
                 results.Add(new SymlinkResult(true));
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Failed to create link {Link}", link);
                 results.Add(new SymlinkResult(false, ex.Message));
             }
         }
