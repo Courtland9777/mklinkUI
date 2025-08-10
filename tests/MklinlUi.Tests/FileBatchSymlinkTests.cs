@@ -1,6 +1,7 @@
 using FluentAssertions;
 using MklinlUi.Core;
 using MklinlUi.Fakes;
+using System.IO;
 using Xunit;
 
 namespace MklinlUi.Tests;
@@ -13,13 +14,14 @@ public class FileBatchSymlinkTests
         var service = new FakeSymlinkService();
         var manager = new SymlinkManager(new FakeDeveloperModeService(), service);
 
-        var sources = new[] { "/src/a.txt", "/src/b.txt" };
-        var results = await manager.CreateFileSymlinksAsync(sources, "/dest");
+        var dest = "/dest";
+        var sources = new[] { Path.Combine("/src", "a.txt"), Path.Combine("/src", "b.txt") };
+        var results = await manager.CreateFileSymlinksAsync(sources, dest);
 
         results.Should().HaveCount(2);
         results.Should().OnlyContain(r => r.Success);
-        service.Created.Should().Contain(("/dest/a.txt", "/src/a.txt"));
-        service.Created.Should().Contain(("/dest/b.txt", "/src/b.txt"));
+        service.Created.Should().Contain((Path.Combine(dest, "a.txt"), sources[0]));
+        service.Created.Should().Contain((Path.Combine(dest, "b.txt"), sources[1]));
     }
 
     [Fact]
