@@ -25,8 +25,10 @@ public class IndexModelTests
 
         await model.OnPostAsync();
 
-        model.Success.Should().BeFalse();
-        model.Message.Should().Be("One or more file names are invalid.");
+        model.Results.Should().HaveCount(1);
+        var result = model.Results[0];
+        result.Success.Should().BeFalse();
+        result.ErrorMessage.Should().Be("One or more file names are invalid.");
     }
 
     [Fact]
@@ -42,8 +44,10 @@ public class IndexModelTests
 
         await model.OnPostAsync();
 
-        model.Success.Should().BeFalse();
-        model.Message.Should().Contain("Source file not found");
+        model.Results.Should().HaveCount(1);
+        var result = model.Results[0];
+        result.Success.Should().BeFalse();
+        result.ErrorMessage.Should().Contain("Source file not found");
     }
 
     [Fact]
@@ -60,8 +64,10 @@ public class IndexModelTests
 
         await model.OnPostAsync();
 
-        model.Success.Should().BeFalse();
-        model.Message.Should().Be("An unexpected error occurred while creating the symlink.");
+        model.Results.Should().HaveCount(1);
+        var result = model.Results[0];
+        result.Success.Should().BeFalse();
+        result.ErrorMessage.Should().Be("An unexpected error occurred while creating the symlink.");
     }
 
     [Fact]
@@ -78,8 +84,10 @@ public class IndexModelTests
 
         await model.OnPostAsync();
 
-        model.Success.Should().BeFalse();
-        model.Message.Should().Be("An unexpected error occurred while creating file symlinks.");
+        model.Results.Should().HaveCount(1);
+        var result = model.Results[0];
+        result.Success.Should().BeFalse();
+        result.ErrorMessage.Should().Be("An unexpected error occurred while creating file symlinks.");
     }
 
 
