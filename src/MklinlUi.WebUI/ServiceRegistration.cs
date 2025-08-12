@@ -8,30 +8,23 @@ namespace MklinlUi.WebUI;
 
 public static class ServiceRegistration
 {
-    public static IServiceCollection AddPlatformServices(this IServiceCollection services,
-        ILogger logger)
+    public static IServiceCollection AddPlatformServices(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
-        ArgumentNullException.ThrowIfNull(logger);
+
+        using var provider = services.BuildServiceProvider();
+        var loggerFactory = provider.GetRequiredService<ILoggerFactory>();
+        var logger = loggerFactory.CreateLogger("ServiceRegistration");
 
         var assemblyName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "MklinlUi.Windows.dll"
             : "MklinlUi.Fakes.dll";
         var assemblyPath = Path.Combine(AppContext.BaseDirectory, assemblyName);
 
-        try
-        {
-            var (dev, sym) = TryLoadServices(assemblyPath, logger);
+        var (dev, sym) = TryLoadServices(assemblyPath, logger);
 
-            services.AddSingleton(dev);
-            services.AddSingleton(sym);
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "Falling back to default services");
-            services.AddSingleton<IDeveloperModeService>(new DefaultDeveloperModeService());
-            services.AddSingleton<ISymlinkService>(new DefaultSymlinkService());
-        }
+        services.AddSingleton(dev);
+        services.AddSingleton(sym);
 
         return services;
     }
@@ -74,9 +67,16 @@ public static class ServiceRegistration
     private sealed class DefaultDeveloperModeService : IDeveloperModeService
     {
         public Task<bool> IsEnabledAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult(string.Equals(
+        {
+            if (!OperatingSystem.IsWindows())
+            {
+                return Task.FromResult(true);
+            }
+
+            return Task.FromResult(string.Equals(
                 Environment.GetEnvironmentVariable("MKLINKUI_DEVELOPER_MODE"),
                 "true", StringComparison.OrdinalIgnoreCase));
+        }
     }
 
     private sealed class DefaultSymlinkService : ISymlinkService

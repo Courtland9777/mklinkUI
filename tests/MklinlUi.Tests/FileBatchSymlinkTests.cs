@@ -37,6 +37,8 @@ public class FileBatchSymlinkTests
         results.Should().HaveCount(2);
         results[0].Success.Should().BeTrue();
         results[1].Success.Should().BeFalse();
+        results[1].ErrorMessage.Should().Be("Duplicate file name: a.txt");
+        service.Created.Should().HaveCount(1);
     }
 
     [Fact]
@@ -49,6 +51,28 @@ public class FileBatchSymlinkTests
 
         results.Should().HaveCount(1);
         results[0].Success.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task CreateFileSymlinksAsync_propagates_service_exception()
+    {
+        var service = new FailingSymlinkService();
+        var manager = new SymlinkManager(new FakeDeveloperModeService(), service, NullLogger<SymlinkManager>.Instance);
+
+        var results = await manager.CreateFileSymlinksAsync(["/src/a.txt"], "/dest");
+
+        results.Should().HaveCount(1);
+        results[0].Success.Should().BeFalse();
+        results[0].ErrorMessage.Should().Be("boom");
+    }
+
+    private sealed class FailingSymlinkService : ISymlinkService
+    {
+        public Task<SymlinkResult> CreateSymlinkAsync(string linkPath, string targetPath, CancellationToken cancellationToken = default)
+            => Task.FromResult(new SymlinkResult(true));
+
+        public Task<IReadOnlyList<SymlinkResult>> CreateFileSymlinksAsync(IEnumerable<string> sourceFiles, string destinationFolder, CancellationToken cancellationToken = default)
+            => throw new InvalidOperationException("boom");
     }
   [Fact]
     public async Task CreateFileSymlinksAsync_throws_when_cancelled_before_start()

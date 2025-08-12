@@ -17,7 +17,7 @@ public class ServiceRegistrationTests
     {
         // Arrange
         var services = new ServiceCollection();
-        var logger = NullLogger.Instance;
+        services.AddLogging();
 
         var originalBase = AppContext.BaseDirectory;
         var tempDir = Directory.CreateTempSubdirectory();
@@ -25,11 +25,11 @@ public class ServiceRegistrationTests
 
         try
         {
-            // Act
-            services.AddPlatformServices(logger);
-            using var provider = services.BuildServiceProvider();
-            var dev = provider.GetRequiredService<IDeveloperModeService>();
-            var sym = provider.GetRequiredService<ISymlinkService>();
+                // Act
+                services.AddPlatformServices();
+                using var provider = services.BuildServiceProvider();
+                var dev = provider.GetRequiredService<IDeveloperModeService>();
+                var sym = provider.GetRequiredService<ISymlinkService>();
 
             // Assert
             dev.GetType().Name.Should().Be("DefaultDeveloperModeService");

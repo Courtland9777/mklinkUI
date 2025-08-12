@@ -64,7 +64,7 @@ public sealed class IndexModel(
         }
 
         var sourceFiles = SourceFilePaths
-            .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .ToList();
 
         if (sourceFiles.Count == 0 || string.IsNullOrWhiteSpace(DestinationFolder))
@@ -105,11 +105,20 @@ public sealed class IndexModel(
             return Page();
         }
 
+        if (results.Count != sourceFiles.Count)
+        {
+            logger.LogError("Symlink result count {ResultCount} does not match source file count {SourceCount}",
+                results.Count, sourceFiles.Count);
+            Success = false;
+            Message = "An unexpected error occurred while creating file symlinks.";
+            return Page();
+        }
+
         Success = results.All(r => r.Success);
         Message = string.Join("\n", sourceFiles.Select((s, i) =>
         {
             var link = Path.Combine(DestinationFolder, Path.GetFileName(s));
-            var r = results[Math.Min(i, results.Count - 1)];
+            var r = results[i];
             return $"{s} -> {link}: {(r.Success ? "OK" : r.ErrorMessage)}";
         }));
         return Page();

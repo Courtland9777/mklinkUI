@@ -74,5 +74,5 @@ The dark-themed web interface centers its main card on screen for common desktop
 
 ## Ports
 
-By default the app attempts to bind to HTTP port **5280** (and HTTPS **5281** when a certificate is configured). If the port is in use it probes the range 5280–5299 for the first free port. Override with the `ASPNETCORE_URLS` environment variable or `Server:Port` in `appsettings.json`.
+By default the app binds to HTTP port **5280** (and HTTPS **5281** when a certificate is configured). Override with the `ASPNETCORE_URLS` environment variable or `Server:Port` in `appsettings.json`.
 

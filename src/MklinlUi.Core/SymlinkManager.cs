@@ -53,16 +53,49 @@ public sealed class SymlinkManager(
             return [.. sources.Select(_ => new SymlinkResult(false, "Developer mode not enabled."))];
         }
 
+        var groups = sources
+            .Select((s, i) => (Source: s, Index: i, Name: Path.GetFileName(s)))
+            .GroupBy(x => x.Name, StringComparer.OrdinalIgnoreCase);
+
+        var unique = new List<(string Source, int Index)>();
+        var results = new SymlinkResult[sources.Count];
+
+        foreach (var group in groups)
+        {
+            var first = group.First();
+            unique.Add((first.Source, first.Index));
+            foreach (var item in group.Skip(1))
+                results[item.Index] = new SymlinkResult(false, $"Duplicate file name: {group.Key}");
+        }
+
         try
         {
-            return await symlinkService
-                .CreateFileSymlinksAsync(sources, destinationFolder, cancellationToken)
+            var serviceResults = await symlinkService
+                .CreateFileSymlinksAsync(unique.Select(u => u.Source), destinationFolder, cancellationToken)
                 .ConfigureAwait(false);
+
+            if (serviceResults.Count != unique.Count)
+            {
+                logger.LogError("Symlink service returned {ResultCount} results for {SourceCount} sources.",
+                    serviceResults.Count, unique.Count);
+                var error = "Failed to create symlinks.";
+                foreach (var (_, index) in unique)
+                    results[index] = new SymlinkResult(false, error);
+                return results;
+            }
+
+            for (var i = 0; i < unique.Count; i++)
+                results[unique[i].Index] = serviceResults[i];
+
+            return results;
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to create file symlinks in {DestinationFolder}", destinationFolder);
-            return [.. sources.Select(_ => new SymlinkResult(false, "Failed to create symlinks."))];
+            var error = ex.Message;
+            foreach (var (_, index) in unique)
+                results[index] = new SymlinkResult(false, error);
+            return results;
         }
     }
 }
