@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using MklinlUi.Core;
+using System.IO;
 
 namespace MklinlUi.WebUI.Pages;
 
@@ -45,9 +46,27 @@ public sealed class IndexModel(SymlinkManager manager, IDeveloperModeService dev
             return Page();
         }
 
-        var sourceFiles = SourceFiles
-            .Select(f => f.FileName)
-            .ToList();
+        var sourceFiles = new List<string>();
+        foreach (var formFile in SourceFiles)
+        {
+            var name = Path.GetFileName(formFile.FileName);
+            if (string.IsNullOrWhiteSpace(name) || name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+            {
+                Success = false;
+                Message = "One or more file names are invalid.";
+                return Page();
+            }
+
+            if (!System.IO.File.Exists(formFile.FileName))
+            {
+                Success = false;
+                Message = $"Source file not found: {formFile.FileName}.";
+                return Page();
+            }
+
+            sourceFiles.Add(name);
+        }
+
         if (sourceFiles.Count == 0 || string.IsNullOrWhiteSpace(DestinationFolder))
         {
             Success = false;
