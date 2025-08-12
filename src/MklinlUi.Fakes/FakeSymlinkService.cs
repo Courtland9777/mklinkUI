@@ -29,20 +29,26 @@ public sealed class FakeSymlinkService : ISymlinkService
         ArgumentNullException.ThrowIfNull(sourceFiles);
         ArgumentException.ThrowIfNullOrWhiteSpace(destinationFolder);
 
+        cancellationToken.ThrowIfCancellationRequested();
+
         var results = new List<SymlinkResult>();
         foreach (var source in sourceFiles)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             if (string.IsNullOrWhiteSpace(source))
             {
                 results.Add(new SymlinkResult(false, "Invalid source."));
                 continue;
             }
+
             var link = Path.Combine(destinationFolder, Path.GetFileName(source));
             if (_created.Any(c => string.Equals(c.LinkPath, link, StringComparison.OrdinalIgnoreCase)))
             {
                 results.Add(new SymlinkResult(false, "Link already exists."));
                 continue;
             }
+
             _created.Add((link, source));
             results.Add(new SymlinkResult(true));
         }

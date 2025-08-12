@@ -2,6 +2,7 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using MklinlUi.Core;
 using MklinlUi.Fakes;
+using System.Threading;
 using Xunit;
 
 namespace MklinlUi.Tests;
@@ -48,5 +49,32 @@ public class FileBatchSymlinkTests
 
         results.Should().HaveCount(1);
         results[0].Success.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task CreateFileSymlinksAsync_throws_when_cancelled_before_start()
+    {
+        var service = new FakeSymlinkService();
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        await Assert.ThrowsAsync<OperationCanceledException>(() =>
+            service.CreateFileSymlinksAsync(["/src/a.txt"], "/dest", cts.Token));
+    }
+
+    [Fact]
+    public async Task CreateFileSymlinksAsync_throws_when_cancelled_during_iteration()
+    {
+        var service = new FakeSymlinkService();
+        using var cts = new CancellationTokenSource();
+        IEnumerable<string> Sources()
+        {
+            yield return "/src/a.txt";
+            cts.Cancel();
+            yield return "/src/b.txt";
+        }
+
+        await Assert.ThrowsAsync<OperationCanceledException>(() =>
+            service.CreateFileSymlinksAsync(Sources(), "/dest", cts.Token));
     }
 }
