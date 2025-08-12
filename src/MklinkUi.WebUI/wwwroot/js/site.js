@@ -1,17 +1,23 @@
 // File and folder browsers
-async function browseFile(inputId) {
+// Browsers limit access to absolute file paths for security, so only file names are available.
+async function browseFile(inputId, allowMultiple = false) {
+    const target = document.getElementById(inputId);
     if (window.showOpenFilePicker) {
         try {
-            const [handle] = await window.showOpenFilePicker();
-            document.getElementById(inputId).value = handle.name;
+            const handles = await window.showOpenFilePicker({ multiple: allowMultiple });
+            handles.forEach(h => {
+                target.value += (target.value ? "\n" : "") + h.name;
+            });
         } catch { }
         return;
     }
     const input = document.createElement('input');
     input.type = 'file';
+    if (allowMultiple) input.multiple = true;
     input.onchange = e => {
-        const file = e.target.files[0];
-        if (file) document.getElementById(inputId).value = file.name;
+        Array.from(e.target.files).forEach(file => {
+            target.value += (target.value ? "\n" : "") + file.name;
+        });
     };
     input.click();
 }
@@ -20,7 +26,20 @@ async function browseFolder(inputId) {
     if (window.showDirectoryPicker) {
         try {
             const handle = await window.showDirectoryPicker();
-            document.getElementById(inputId).value = handle.name;
+            let path = handle.name;
+
+            // Non-standard: some browsers expose a full path on the handle
+            if ('path' in handle) {
+                path = handle.path;
+            } else if (handle.resolve && navigator.storage?.getDirectory) {
+                try {
+                    const root = await navigator.storage.getDirectory();
+                    const segments = await root.resolve(handle);
+                    if (segments) path = segments.join('/');
+                } catch { }
+            }
+
+            document.getElementById(inputId).value = path;
         } catch { }
         return;
     }
@@ -29,7 +48,11 @@ async function browseFolder(inputId) {
     input.webkitdirectory = true;
     input.onchange = e => {
         const file = e.target.files[0];
-        if (file) document.getElementById(inputId).value = file.webkitRelativePath.split('/')[0];
+        if (file) {
+            // Prefer the full path when available (e.g., Electron or Chromium-based browsers)
+            const path = file.path || file.webkitRelativePath.split('/')[0];
+            document.getElementById(inputId).value = path;
+        }
     };
     input.click();
 }
