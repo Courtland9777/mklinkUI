@@ -76,3 +76,15 @@ The dark-themed web interface centers its main card on screen for common desktop
 
 By default the app binds to HTTP port **5280** (and HTTPS **5281** when a certificate is configured). Override with the `ASPNETCORE_URLS` environment variable or `Server:Port` in `appsettings.json`.
 
+
+## Continuous integration
+A GitHub Actions workflow runs on every push and pull request to build the application on Linux and Windows and execute the full test suite.
+
+## Docker
+A multi-stage `Dockerfile` is available to publish and run MklinkUI in a container.
+
+### Build and run
+```bash
+docker build -t mklinkui .
+docker run --rm -p 8080:8080 mklinkui
+```
