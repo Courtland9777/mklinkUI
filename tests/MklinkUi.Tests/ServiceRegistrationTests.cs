@@ -1,7 +1,5 @@
-using System;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging.Abstractions;
 using MklinkUi.Core;
 using MklinkUi.WebUI;
 using Xunit;
@@ -125,7 +123,7 @@ public class ServiceRegistrationTests
             Func<Task> single = () => sym.CreateSymlinkAsync("a", "b", cts.Token);
             await single.Should().ThrowAsync<OperationCanceledException>();
 
-            Func<Task> batch = () => sym.CreateFileSymlinksAsync(new[] { "a" }, "dest", cts.Token);
+            Func<Task> batch = () => sym.CreateFileSymlinksAsync(["a"], "dest", cts.Token);
             await batch.Should().ThrowAsync<OperationCanceledException>();
         }
         finally

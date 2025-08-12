@@ -1,20 +1,13 @@
-using System;
 using System.Net;
-using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Xunit;
 
 namespace MklinkUi.Tests;
 
-public class HealthEndpointTests : IClassFixture<WebApplicationFactory<Program>>
+public class HealthEndpointTests(WebApplicationFactory<Program> factory) : IClassFixture<WebApplicationFactory<Program>>
 {
-    private readonly WebApplicationFactory<Program> _factory;
-
-    public HealthEndpointTests(WebApplicationFactory<Program> factory)
-    {
-        _factory = factory;
-    }
+    private readonly WebApplicationFactory<Program> _factory = factory;
 
     [Fact]
     public async Task Health_endpoint_returns_success()
