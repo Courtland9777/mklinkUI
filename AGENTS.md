@@ -34,7 +34,8 @@ Guidelines for contributors and automated agents working on **MklinkUI**.
 3. **Testing & Code Quality**
    - Add or update tests in `tests/MklinkUi.Tests` for all functional changes.
    - Follow existing coding patterns; use dependency injection and keep functions small with XML documentation where helpful.
-
+   - Prefer 'static readonly' fields over constant array arguments if the called method is called repeatedly and is not mutating the passed array
+   
 4. **Documentation**
    - Update `README.md` or other docs when behavior or build steps change.
    - When modifying service discovery or platform-specific logic, ensure `ServiceRegistration.AddPlatformServices` handles new assemblies.

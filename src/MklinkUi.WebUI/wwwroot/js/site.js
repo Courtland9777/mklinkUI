@@ -1,17 +1,23 @@
 // File and folder browsers
-async function browseFile(inputId) {
+// Browsers limit access to absolute file paths for security, so only file names are available.
+async function browseFile(inputId, allowMultiple = false) {
+    const target = document.getElementById(inputId);
     if (window.showOpenFilePicker) {
         try {
-            const [handle] = await window.showOpenFilePicker();
-            document.getElementById(inputId).value = handle.name;
+            const handles = await window.showOpenFilePicker({ multiple: allowMultiple });
+            handles.forEach(h => {
+                target.value += (target.value ? "\n" : "") + h.name;
+            });
         } catch { }
         return;
     }
     const input = document.createElement('input');
     input.type = 'file';
+    if (allowMultiple) input.multiple = true;
     input.onchange = e => {
-        const file = e.target.files[0];
-        if (file) document.getElementById(inputId).value = file.name;
+        Array.from(e.target.files).forEach(file => {
+            target.value += (target.value ? "\n" : "") + file.name;
+        });
     };
     input.click();
 }
