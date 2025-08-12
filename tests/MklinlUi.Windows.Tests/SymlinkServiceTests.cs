@@ -56,7 +56,7 @@ public class SymlinkServiceTests
         var result = await service.CreateSymlinkAsync(link, target);
 
         result.Success.Should().BeFalse();
-        result.Message.Should().Be("Link already exists.");
+        result.ErrorMessage.Should().Be("Link already exists.");
         File.GetAttributes(link).HasFlag(FileAttributes.ReparsePoint).Should().BeFalse();
     }
 }
