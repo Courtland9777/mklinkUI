@@ -1,8 +1,11 @@
 using FluentAssertions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging.Abstractions;
 using MklinlUi.Core;
 using MklinlUi.Fakes;
 using MklinlUi.WebUI.Pages;
+using System.IO;
+using System.Threading;
 using Xunit;
 
 namespace MklinlUi.Tests;
@@ -15,9 +18,10 @@ public class IndexModelTests
         var devService = new FakeDeveloperModeService();
         var manager = new SymlinkManager(devService, new FakeSymlinkService(), NullLogger<SymlinkManager>.Instance);
         var model = new IndexModel(manager, devService)
+        var model = new IndexModel(manager, devService, NullLogger<IndexModel>.Instance)
         {
             DestinationFolder = "/dest",
-            SourceFilePaths = "/src/"
+            SourceFiles = [CreateFormFile("")]
         };
 
         await model.OnPostAsync();
@@ -32,9 +36,10 @@ public class IndexModelTests
         var devService = new FakeDeveloperModeService();
         var manager = new SymlinkManager(devService, new FakeSymlinkService(), NullLogger<SymlinkManager>.Instance);
         var model = new IndexModel(manager, devService)
+        var model = new IndexModel(manager, devService, NullLogger<IndexModel>.Instance)
         {
             DestinationFolder = "/dest",
-            SourceFilePaths = "/src/missing.txt"
+            SourceFiles = [CreateFormFile("missing.txt")]
         };
 
         await model.OnPostAsync();
@@ -44,25 +49,60 @@ public class IndexModelTests
     }
 
     [Fact]
-    public async Task OnPostAsync_creates_symlinks_when_sources_valid()
+    public async Task OnPostAsync_returns_error_when_create_symlink_throws()
     {
-        var devService = new FakeDeveloperModeService();
-        var fakeService = new FakeSymlinkService();
-        var manager = new SymlinkManager(devService, fakeService, NullLogger<SymlinkManager>.Instance);
-        var tempFile = Path.GetTempFileName();
-
-        var model = new IndexModel(manager, devService)
+        var devService = new ThrowingDeveloperModeService();
+        var manager = new SymlinkManager(devService, new FakeSymlinkService(), NullLogger<SymlinkManager>.Instance);
+        var model = new IndexModel(manager, devService, NullLogger<IndexModel>.Instance)
         {
-            DestinationFolder = "/dest",
-            SourceFilePaths = tempFile
+            LinkType = "Folder",
+            SourcePath = "/src",
+            DestinationPath = "/dest"
         };
 
         await model.OnPostAsync();
 
-        model.Success.Should().BeTrue();
-        fakeService.Created.Should().ContainSingle();
-        fakeService.Created[0].Should().Be((Path.Combine("/dest", Path.GetFileName(tempFile)), tempFile));
+        model.Success.Should().BeFalse();
+        model.Message.Should().Be("An unexpected error occurred while creating the symlink.");
+    }
 
-        File.Delete(tempFile);
+    [Fact]
+    public async Task OnPostAsync_returns_error_when_create_file_symlinks_throws()
+    {
+        var tempFile = Path.GetTempFileName();
+        var devService = new ThrowingDeveloperModeService();
+        var manager = new SymlinkManager(devService, new FakeSymlinkService(), NullLogger<SymlinkManager>.Instance);
+        var model = new IndexModel(manager, devService, NullLogger<IndexModel>.Instance)
+        {
+            DestinationFolder = "/dest",
+            SourceFiles = [CreateFormFile(tempFile)]
+        };
+
+        await model.OnPostAsync();
+
+        model.Success.Should().BeFalse();
+        model.Message.Should().Be("An unexpected error occurred while creating file symlinks.");
+    }
+
+    private sealed class ThrowingDeveloperModeService : IDeveloperModeService
+    {
+        private bool first = true;
+
+        public Task<bool> IsEnabledAsync(CancellationToken cancellationToken = default)
+        {
+            if (first)
+            {
+                first = false;
+                return Task.FromResult(true);
+            }
+
+            throw new InvalidOperationException("Failure");
+        }
+    }
+
+    private static FormFile CreateFormFile(string fileName)
+    {
+        var stream = new MemoryStream();
+        return new FormFile(stream, 0, 0, fileName, fileName);
     }
 }
