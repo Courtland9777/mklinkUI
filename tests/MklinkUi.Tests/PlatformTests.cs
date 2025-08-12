@@ -20,7 +20,7 @@ public class PlatformTests
 
         try
         {
-            var entry = typeof(Program).Assembly.EntryPoint!;
+            var entry = typeof(global::Program).Assembly.EntryPoint!;
             Action act = () => entry.Invoke(null, new object[] { Array.Empty<string>() });
 
             act.Should().Throw<TargetInvocationException>()
