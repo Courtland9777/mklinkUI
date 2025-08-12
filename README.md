@@ -69,6 +69,7 @@ The published files are in `src/MklinkUi.WebUI/bin/Release/net8.0/publish`.
 - The web UI is minimal and lacks comprehensive error handling.
 - On non-Windows platforms, the developer mode check always reports enabled.
 - Creating symbolic links may require elevated privileges or Windows Developer Mode.
+- Browser file pickers cannot expose absolute file paths, so only file names are captured when selecting files.
 
 ## Web interface
 
