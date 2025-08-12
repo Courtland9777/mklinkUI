@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using System.Linq;
 
 namespace MklinlUi.Core;
 
@@ -20,13 +21,7 @@ public sealed class SymlinkManager(
         ArgumentException.ThrowIfNullOrWhiteSpace(targetPath);
 
         if (!await developerModeService.IsEnabledAsync(cancellationToken).ConfigureAwait(false))
-        {
-            logger.LogWarning(
-                "Developer mode not enabled; skipping symlink from {LinkPath} to {TargetPath}",
-                linkPath,
-                targetPath);
             return new SymlinkResult(false, "Developer mode not enabled.");
-        }
 
         try
         {
@@ -49,23 +44,26 @@ public sealed class SymlinkManager(
         ArgumentNullException.ThrowIfNull(sourceFiles);
         ArgumentException.ThrowIfNullOrWhiteSpace(destinationFolder);
 
+        var sources = sourceFiles.ToList();
         if (!await developerModeService.IsEnabledAsync(cancellationToken).ConfigureAwait(false))
-        {
-            logger.LogWarning(
-                "Developer mode not enabled; skipping file symlinks in {DestinationFolder}",
-                destinationFolder);
             return [new SymlinkResult(false, "Developer mode not enabled.")];
-        }
+            return Enumerable.Range(0, sources.Count)
+                .Select(_ => new SymlinkResult(false, "Developer mode not enabled."))
+                .ToList();
 
         try
         {
             return await symlinkService.CreateFileSymlinksAsync(sourceFiles, destinationFolder, cancellationToken)
+            return await symlinkService.CreateFileSymlinksAsync(sources, destinationFolder, cancellationToken)
                 .ConfigureAwait(false);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to create file symlinks in {DestinationFolder}", destinationFolder);
             return [new SymlinkResult(false, "Failed to create symlinks.")];
+            return Enumerable.Range(0, sources.Count)
+                .Select(_ => new SymlinkResult(false, "Failed to create symlinks."))
+                .ToList();
         }
     }
 }
