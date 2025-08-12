@@ -50,8 +50,7 @@ public class FileBatchSymlinkTests
         results.Should().HaveCount(1);
         results[0].Success.Should().BeFalse();
     }
-
-    [Fact]
+  [Fact]
     public async Task CreateFileSymlinksAsync_throws_when_cancelled_before_start()
     {
         var service = new FakeSymlinkService();

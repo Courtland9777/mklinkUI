@@ -58,7 +58,7 @@ static bool PortAvailable(int port, ILogger logger)
     }
     catch (SocketException ex)
     {
-        logger.LogError(ex, "Port {Port} is unavailable", port);
+        logger.LogDebug(ex, "Port {Port} is unavailable", port);
         return false;
     }
 }
