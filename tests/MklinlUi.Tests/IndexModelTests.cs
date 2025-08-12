@@ -1,5 +1,4 @@
 using FluentAssertions;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging.Abstractions;
 using MklinlUi.Core;
 using MklinlUi.Fakes;
@@ -18,7 +17,7 @@ public class IndexModelTests
         var model = new IndexModel(manager, devService)
         {
             DestinationFolder = "/dest",
-            SourceFiles = [CreateFormFile("")]
+            SourceFilePaths = "/src/"
         };
 
         await model.OnPostAsync();
@@ -35,7 +34,7 @@ public class IndexModelTests
         var model = new IndexModel(manager, devService)
         {
             DestinationFolder = "/dest",
-            SourceFiles = [CreateFormFile("missing.txt")]
+            SourceFilePaths = "/src/missing.txt"
         };
 
         await model.OnPostAsync();
@@ -44,9 +43,26 @@ public class IndexModelTests
         model.Message.Should().Contain("Source file not found");
     }
 
-    private static FormFile CreateFormFile(string fileName)
+    [Fact]
+    public async Task OnPostAsync_creates_symlinks_when_sources_valid()
     {
-        var stream = new MemoryStream();
-        return new FormFile(stream, 0, 0, fileName, fileName);
+        var devService = new FakeDeveloperModeService();
+        var fakeService = new FakeSymlinkService();
+        var manager = new SymlinkManager(devService, fakeService, NullLogger<SymlinkManager>.Instance);
+        var tempFile = Path.GetTempFileName();
+
+        var model = new IndexModel(manager, devService)
+        {
+            DestinationFolder = "/dest",
+            SourceFilePaths = tempFile
+        };
+
+        await model.OnPostAsync();
+
+        model.Success.Should().BeTrue();
+        fakeService.Created.Should().ContainSingle();
+        fakeService.Created[0].Should().Be((Path.Combine("/dest", Path.GetFileName(tempFile)), tempFile));
+
+        File.Delete(tempFile);
     }
 }
