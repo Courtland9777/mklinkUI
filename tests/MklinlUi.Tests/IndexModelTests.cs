@@ -21,7 +21,7 @@ public class IndexModelTests
             SourceFiles = [CreateFormFile("")]
         };
 
-        var result = await model.OnPostAsync();
+        await model.OnPostAsync();
 
         model.Success.Should().BeFalse();
         model.Message.Should().Be("One or more file names are invalid.");
@@ -38,7 +38,7 @@ public class IndexModelTests
             SourceFiles = [CreateFormFile("missing.txt")]
         };
 
-        var result = await model.OnPostAsync();
+        await model.OnPostAsync();
 
         model.Success.Should().BeFalse();
         model.Message.Should().Contain("Source file not found");
