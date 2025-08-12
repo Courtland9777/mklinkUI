@@ -16,10 +16,11 @@ public class IndexModelTests
     {
         var devService = new FakeDeveloperModeService();
         var manager = new SymlinkManager(devService, new FakeSymlinkService(), NullLogger<SymlinkManager>.Instance);
+        var invalidChar = Path.GetInvalidFileNameChars().First();
         var model = new IndexModel(manager, devService, NullLogger<IndexModel>.Instance)
         {
             DestinationFolder = "/dest",
-            SourceFilePaths = "/invalid|name.txt"
+            SourceFilePaths = $"/invalid{invalidChar}name.txt"
         };
 
         await model.OnPostAsync();
