@@ -12,22 +12,32 @@ public static class ServiceRegistration
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        using var provider = services.BuildServiceProvider();
-        var loggerFactory = provider.GetRequiredService<ILoggerFactory>();
-        var logger = loggerFactory.CreateLogger("ServiceRegistration");
+        services.AddSingleton<ServicesWrapper>(sp =>
+        {
+            var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger("ServiceRegistration");
+            var (dev, sym) = LoadServices(logger);
+            return new ServicesWrapper(dev, sym);
+        });
 
-        var assemblyName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-            ? "MklinkUi.Windows.dll"
-            : "MklinkUi.Fakes.dll";
-        var assemblyPath = Path.Combine(AppContext.BaseDirectory, assemblyName);
+        services.AddSingleton<IDeveloperModeService>(sp =>
+            sp.GetRequiredService<ServicesWrapper>().Dev);
 
-        var (dev, sym) = TryLoadServices(assemblyPath, logger);
-
-        services.AddSingleton(dev);
-        services.AddSingleton(sym);
+        services.AddSingleton<ISymlinkService>(sp =>
+            sp.GetRequiredService<ServicesWrapper>().Sym);
 
         return services;
+
+        static (IDeveloperModeService dev, ISymlinkService sym) LoadServices(ILogger logger)
+        {
+            var assemblyName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                ? "MklinkUi.Windows.dll"
+                : "MklinkUi.Fakes.dll";
+            var assemblyPath = Path.Combine(AppContext.BaseDirectory, assemblyName);
+            return TryLoadServices(assemblyPath, logger);
+        }
     }
+
+    private sealed record ServicesWrapper(IDeveloperModeService Dev, ISymlinkService Sym);
 
     private static (IDeveloperModeService dev, ISymlinkService sym) TryLoadServices(string assemblyPath,
         ILogger logger)
