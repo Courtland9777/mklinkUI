@@ -1,5 +1,4 @@
 using FluentAssertions;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging.Abstractions;
 using MklinlUi.Core;
 using MklinlUi.Fakes;
@@ -17,11 +16,10 @@ public class IndexModelTests
     {
         var devService = new FakeDeveloperModeService();
         var manager = new SymlinkManager(devService, new FakeSymlinkService(), NullLogger<SymlinkManager>.Instance);
-        var model = new IndexModel(manager, devService)
         var model = new IndexModel(manager, devService, NullLogger<IndexModel>.Instance)
         {
             DestinationFolder = "/dest",
-            SourceFiles = [CreateFormFile("")]
+            SourceFilePaths = "/invalid|name.txt"
         };
 
         await model.OnPostAsync();
@@ -35,11 +33,10 @@ public class IndexModelTests
     {
         var devService = new FakeDeveloperModeService();
         var manager = new SymlinkManager(devService, new FakeSymlinkService(), NullLogger<SymlinkManager>.Instance);
-        var model = new IndexModel(manager, devService)
         var model = new IndexModel(manager, devService, NullLogger<IndexModel>.Instance)
         {
             DestinationFolder = "/dest",
-            SourceFiles = [CreateFormFile("missing.txt")]
+            SourceFilePaths = Path.Combine(Path.GetTempPath(), "missing.txt")
         };
 
         await model.OnPostAsync();
@@ -75,7 +72,7 @@ public class IndexModelTests
         var model = new IndexModel(manager, devService, NullLogger<IndexModel>.Instance)
         {
             DestinationFolder = "/dest",
-            SourceFiles = [CreateFormFile(tempFile)]
+            SourceFilePaths = tempFile
         };
 
         await model.OnPostAsync();
@@ -100,9 +97,4 @@ public class IndexModelTests
         }
     }
 
-    private static FormFile CreateFormFile(string fileName)
-    {
-        var stream = new MemoryStream();
-        return new FormFile(stream, 0, 0, fileName, fileName);
-    }
 }
