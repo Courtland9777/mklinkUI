@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Logging;
-using System.Linq;
 
 namespace MklinlUi.Core;
 
@@ -47,9 +46,9 @@ public sealed class SymlinkManager(
         var sources = sourceFiles.ToList();
         if (!await developerModeService.IsEnabledAsync(cancellationToken).ConfigureAwait(false))
             return [new SymlinkResult(false, "Developer mode not enabled.")];
-            return Enumerable.Range(0, sources.Count)
-                .Select(_ => new SymlinkResult(false, "Developer mode not enabled."))
-                .ToList();
+        return Enumerable.Range(0, sources.Count)
+            .Select(_ => new SymlinkResult(false, "Developer mode not enabled."))
+            .ToList();
 
         try
         {

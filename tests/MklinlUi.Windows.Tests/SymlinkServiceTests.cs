@@ -8,11 +8,11 @@ using Xunit;
 
 namespace MklinlUi.Windows.Tests;
 
-    public class SymlinkServiceTests
+public class SymlinkServiceTests
+{
+    [Fact]
+    public async Task CreateFileSymlinksAsync_creates_file_links()
     {
-        [Fact]
-        public async Task CreateFileSymlinksAsync_creates_file_links()
-        {
         var service = new SymlinkService();
         var temp = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(temp);
