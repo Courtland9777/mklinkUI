@@ -53,7 +53,7 @@ public sealed class SymlinkManager(
 
         try
         {
-            return await symlinkService.CreateFileSymlinksAsync(sourceFiles, destinationFolder, cancellationToken)
+            return await symlinkService.CreateFileSymlinksAsync(sourceFiles, destinationFolder, cancellationToken);
             return await symlinkService.CreateFileSymlinksAsync(sources, destinationFolder, cancellationToken)
                 .ConfigureAwait(false);
         }

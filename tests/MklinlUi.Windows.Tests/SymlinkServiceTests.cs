@@ -35,7 +35,7 @@ namespace MklinlUi.Windows.Tests;
     {
         var service = new SymlinkService();
         using var cts = new CancellationTokenSource();
-        cts.Cancel();
+        await cts.CancelAsync();
 
         var act = () => service.CreateSymlinkAsync("link", "target", cts.Token);
 
