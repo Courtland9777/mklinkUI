@@ -27,6 +27,11 @@ if (string.IsNullOrWhiteSpace(configuredUrls))
 
 var app = builder.Build();
 
+if (!OperatingSystem.IsWindows() && !app.Environment.IsDevelopment())
+{
+    throw new PlatformNotSupportedException("MklinkUI is supported on Windows only outside development.");
+}
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");

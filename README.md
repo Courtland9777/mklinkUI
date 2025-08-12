@@ -15,6 +15,8 @@ The solution (`MklinkUi.sln`) is composed of several projects, each with a disti
 ## Platform-specific service registration
 `ServiceRegistration.AddPlatformServices` checks the current OS and loads `MklinkUi.Windows.dll` or `MklinkUi.Fakes.dll` from the application directory using reflection. If neither assembly is found, basic default services are used that rely on the cross-platform `File.CreateSymbolicLink` API and assume Developer Mode is enabled.
 
+Outside of the Development environment the application verifies it is running on Windows and exits with a `PlatformNotSupportedException` on other operating systems.
+
 ## Building
 ### Non-Windows development
 Build the fake services and then the web app:
