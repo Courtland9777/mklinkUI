@@ -19,10 +19,19 @@ public static class ServiceRegistration
             : "MklinlUi.Fakes.dll";
         var assemblyPath = Path.Combine(AppContext.BaseDirectory, assemblyName);
 
-        var (dev, sym) = TryLoadServices(assemblyPath, logger);
+        try
+        {
+            var (dev, sym) = TryLoadServices(assemblyPath, logger);
 
-        services.AddSingleton(dev);
-        services.AddSingleton(sym);
+            services.AddSingleton(dev);
+            services.AddSingleton(sym);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Falling back to default services");
+            services.AddSingleton<IDeveloperModeService>(new DefaultDeveloperModeService());
+            services.AddSingleton<ISymlinkService>(new DefaultSymlinkService());
+        }
 
         return services;
     }
@@ -51,7 +60,7 @@ public static class ServiceRegistration
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to load {AssemblyPath}", assemblyPath);
-            throw;
+            return (new DefaultDeveloperModeService(), new DefaultSymlinkService());
         }
 
         static T? Create<T>(Assembly assembly) where T : class

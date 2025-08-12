@@ -17,6 +17,7 @@ public class IndexModelTests
     {
         var devService = new FakeDeveloperModeService();
         var manager = new SymlinkManager(devService, new FakeSymlinkService(), NullLogger<SymlinkManager>.Instance);
+        var model = new IndexModel(manager, devService)
         var model = new IndexModel(manager, devService, NullLogger<IndexModel>.Instance)
         {
             DestinationFolder = "/dest",
@@ -34,6 +35,7 @@ public class IndexModelTests
     {
         var devService = new FakeDeveloperModeService();
         var manager = new SymlinkManager(devService, new FakeSymlinkService(), NullLogger<SymlinkManager>.Instance);
+        var model = new IndexModel(manager, devService)
         var model = new IndexModel(manager, devService, NullLogger<IndexModel>.Instance)
         {
             DestinationFolder = "/dest",
