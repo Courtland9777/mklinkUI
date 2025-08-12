@@ -17,6 +17,7 @@
         </div>
 
         <form method="post" asp-antiforgery="true">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="mb-3">
                 <label class="form-label" asp-for="LinkType">Symlink Type</label>
                 <div>
@@ -29,9 +30,12 @@
                         <label class="form-check-label" for="linkTypeFolder">Folder</label>
                     </div>
                 </div>
+                <span asp-validation-for="LinkType" class="text-danger"></span>
             </div>
             <div class="mb-3" id="fileInputs">
                 <label class="form-label" asp-for="SourceFilePaths">Source File Paths</label>
+                <textarea class="form-control" asp-for="SourceFilePaths" rows="3"></textarea>
+                <span asp-validation-for="SourceFilePaths" class="text-danger"></span>
                 <textarea class="form-control" asp-for="SourceFilePaths" rows="3" placeholder="C:\source\file.txt"></textarea>
                 <div class="form-text">Enter one absolute file path per line, e.g., C:\source\file.txt</div>
                 <div class="input-group">
@@ -46,6 +50,7 @@
                     <input class="form-control" id="destFolder" asp-for="DestinationFolder" placeholder="C:\links" />
                     <button type="button" class="btn btn-outline-secondary" onclick="browseFolder('destFolder')"><i class="fa-solid fa-folder-open me-1"></i>Browse</button>
                 </div>
+                <span asp-validation-for="DestinationFolder" class="text-danger"></span>
                 <small class="form-text text-muted">Full path support depends on your browser. If only the folder name appears, enter the full path manually.</small>
                 <div class="form-text">Enter the absolute folder path where links will be created, e.g., C:\links</div>
             </div>
@@ -56,6 +61,7 @@
                     <input class="form-control" id="sourcePath" asp-for="SourcePath" placeholder="C:\source\folder" />
                     <button type="button" class="btn btn-outline-secondary" onclick="browseFolder('sourcePath')"><i class="fa-solid fa-folder-open me-1"></i>Browse</button>
                 </div>
+                <span asp-validation-for="SourcePath" class="text-danger"></span>
                 <small class="form-text text-muted">Full path support depends on your browser. If only the folder name appears, enter the full path manually.</small>
                 <div class="form-text">Enter the absolute source folder path, e.g., C:\source\folder</div>
             </div>
@@ -66,6 +72,7 @@
                     <input class="form-control" id="destPath" asp-for="DestinationPath" placeholder="C:\destination\folder" />
                     <button type="button" class="btn btn-outline-secondary" onclick="browseFolder('destPath')"><i class="fa-solid fa-folder-open me-1"></i>Browse</button>
                 </div>
+                <span asp-validation-for="DestinationPath" class="text-danger"></span>
                 <small class="form-text text-muted">Full path support depends on your browser. If only the folder name appears, enter the full path manually.</small>
                 <div class="form-text">Enter the absolute destination folder path, e.g., C:\destination\folder</div>
             </div>
@@ -80,4 +87,8 @@
     <div class="alert @(Model.Success.Value ? "alert-success" : "alert-danger") mt-3" role="alert">
         @Model.Message
     </div>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
 }
