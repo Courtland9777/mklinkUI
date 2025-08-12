@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using MklinlUi.Core;
 
 namespace MklinlUi.Windows;
@@ -5,8 +7,10 @@ namespace MklinlUi.Windows;
 /// <summary>
 ///     Windows implementation of <see cref="ISymlinkService" />.
 /// </summary>
-public sealed class SymlinkService : ISymlinkService
+public sealed class SymlinkService(ILogger<SymlinkService>? logger = null) : ISymlinkService
 {
+    private readonly ILogger<SymlinkService> _logger = logger ?? NullLogger<SymlinkService>.Instance;
+
     public Task<SymlinkResult> CreateSymlinkAsync(string linkPath, string targetPath,
         CancellationToken cancellationToken = default)
     {
@@ -24,7 +28,8 @@ public sealed class SymlinkService : ISymlinkService
         }
         catch (Exception ex)
         {
-            return Task.FromResult(new SymlinkResult(false, ex.Message));
+            _logger.LogError(ex, "Failed to create symlink from {Link} to {Target}", linkPath, targetPath);
+            return Task.FromResult(new SymlinkResult(false, GetMessage(ex)));
         }
     }
 
@@ -38,6 +43,8 @@ public sealed class SymlinkService : ISymlinkService
 
         foreach (var source in sourceFiles)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             if (string.IsNullOrWhiteSpace(source))
             {
                 results.Add(new SymlinkResult(false, "Invalid source."));
@@ -59,10 +66,19 @@ public sealed class SymlinkService : ISymlinkService
             }
             catch (Exception ex)
             {
-                results.Add(new SymlinkResult(false, ex.Message));
+                _logger.LogError(ex, "Failed to create file symlink from {Source} to {Link}", source, link);
+                results.Add(new SymlinkResult(false, GetMessage(ex)));
             }
         }
 
         return Task.FromResult((IReadOnlyList<SymlinkResult>)results);
     }
+
+    private static string GetMessage(Exception ex) => ex switch
+    {
+        UnauthorizedAccessException => "Access denied.",
+        DirectoryNotFoundException or FileNotFoundException => "Path not found.",
+        IOException => "I/O error occurred while creating the link.",
+        _ => "Unexpected error occurred."
+    };
 }
