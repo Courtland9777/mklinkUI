@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MklinkUi.Core\MklinkUi.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\MklinkUi.Fakes\bin\$(Configuration)\net8.0\MklinkUi.Fakes.dll"
+             Condition="Exists('..\MklinkUi.Fakes\bin\$(Configuration)\net8.0\MklinkUi.Fakes.dll')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    </Content>
+    <Content Include="..\MklinkUi.Windows\bin\$(Configuration)\net8.0-windows\MklinkUi.Windows.dll"
+             Condition="Exists('..\MklinkUi.Windows\bin\$(Configuration)\net8.0-windows\MklinkUi.Windows.dll')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
+</Project>
+

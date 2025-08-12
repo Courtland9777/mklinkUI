@@ -3,36 +3,36 @@
 Guidelines for contributors and automated agents working on **MklinkUI**.
 
 ## Project Overview
-- **Solution:** `MklinlUi.sln`
+- **Solution:** `MklinkUi.sln`
 - **Projects:**
-  - `src/MklinlUi.Core` – cross-platform abstractions and `SymlinkManager`.
-  - `src/MklinlUi.Windows` – Windows-only services using the Windows Desktop SDK.
-  - `src/MklinlUi.Fakes` – stub services for non-Windows development and tests.
-  - `src/MklinlUi.WebUI` – ASP.NET Core front end.
-  - `tests/MklinlUi.Tests` – xUnit tests using FluentAssertions and Moq.
+  - `src/MklinkUi.Core` – cross-platform abstractions and `SymlinkManager`.
+  - `src/MklinkUi.Windows` – Windows-only services using the Windows Desktop SDK.
+  - `src/MklinkUi.Fakes` – stub services for non-Windows development and tests.
+  - `src/MklinkUi.WebUI` – ASP.NET Core front end.
+  - `tests/MklinkUi.Tests` – xUnit tests using FluentAssertions and Moq.
 
 ## Contribution Workflow
 1. **Environment**
    - Requires .NET 8 SDK.
-   - Keep Windows-specific code isolated in `MklinlUi.Windows` and rely on interfaces from `MklinlUi.Core`.
+   - Keep Windows-specific code isolated in `MklinkUi.Windows` and rely on interfaces from `MklinkUi.Core`.
 
 2. **Before Committing**
    - Restore packages:  
      `dotnet restore`
    - Build relevant projects:
      - Non‑Windows development:  
-       `dotnet build src/MklinlUi.Fakes`  
-       `dotnet build src/MklinlUi.WebUI`
+       `dotnet build src/MklinkUi.Fakes`  
+       `dotnet build src/MklinkUi.WebUI`
      - Windows development:  
-       `dotnet build src/MklinlUi.Windows`  
-       `dotnet build src/MklinlUi.WebUI`
+       `dotnet build src/MklinkUi.Windows`  
+       `dotnet build src/MklinkUi.WebUI`
    - Run unit tests:  
      `dotnet test`
    - (Optional) Apply formatting:  
      `dotnet format`
 
 3. **Testing & Code Quality**
-   - Add or update tests in `tests/MklinlUi.Tests` for all functional changes.
+   - Add or update tests in `tests/MklinkUi.Tests` for all functional changes.
    - Follow existing coding patterns; use dependency injection and keep functions small with XML documentation where helpful.
 
 4. **Documentation**
