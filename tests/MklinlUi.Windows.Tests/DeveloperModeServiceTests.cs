@@ -12,11 +12,8 @@ public class DeveloperModeServiceTests
 {
     private const uint HKEY_LOCAL_MACHINE = 0x80000002;
 
-    [LibraryImport("advapi32.dll", SetLastError = true)]
-    private static int RegOverridePredefKey(UIntPtr hKey, IntPtr hNewKey)
-    {
-        throw new NotImplementedException();
-    }
+    [DllImport("advapi32.dll", SetLastError = true)]
+    private static extern int RegOverridePredefKey(UIntPtr hKey, IntPtr hNewKey);
 
     [Fact]
     public async Task IsEnabledAsync_returns_false_on_non_Windows()
