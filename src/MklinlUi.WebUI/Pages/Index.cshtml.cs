@@ -9,7 +9,11 @@ public sealed class IndexModel(SymlinkManager manager, IDeveloperModeService dev
 {
     [BindProperty] public string LinkType { get; set; } = "File";
 
-    [BindProperty] public List<IFormFile> SourceFiles { get; set; } = [];
+    /// <summary>
+    ///     Full paths for files to link, provided as newline-separated values.
+    /// </summary>
+    [BindProperty]
+    public string SourceFilePaths { get; set; } = string.Empty;
 
     [BindProperty] public string DestinationFolder { get; set; } = string.Empty;
 
@@ -46,10 +50,20 @@ public sealed class IndexModel(SymlinkManager manager, IDeveloperModeService dev
             return Page();
         }
 
-        var sourceFiles = new List<string>();
-        foreach (var formFile in SourceFiles)
+        var sourceFiles = SourceFilePaths
+            .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToList();
+
+        if (sourceFiles.Count == 0 || string.IsNullOrWhiteSpace(DestinationFolder))
         {
-            var name = Path.GetFileName(formFile.FileName);
+            Success = false;
+            Message = "Select at least one source file and a destination folder.";
+            return Page();
+        }
+
+        foreach (var path in sourceFiles)
+        {
+            var name = Path.GetFileName(path);
             if (string.IsNullOrWhiteSpace(name) || name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
             {
                 Success = false;
@@ -57,21 +71,12 @@ public sealed class IndexModel(SymlinkManager manager, IDeveloperModeService dev
                 return Page();
             }
 
-            if (!System.IO.File.Exists(formFile.FileName))
+            if (!System.IO.File.Exists(path))
             {
                 Success = false;
-                Message = $"Source file not found: {formFile.FileName}.";
+                Message = $"Source file not found: {path}.";
                 return Page();
             }
-
-            sourceFiles.Add(name);
-        }
-
-        if (sourceFiles.Count == 0 || string.IsNullOrWhiteSpace(DestinationFolder))
-        {
-            Success = false;
-            Message = "Select at least one source file and a destination folder.";
-            return Page();
         }
 
         var results = await manager.CreateFileSymlinksAsync(sourceFiles, DestinationFolder);
