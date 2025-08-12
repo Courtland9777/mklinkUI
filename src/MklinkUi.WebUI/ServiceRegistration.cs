@@ -78,14 +78,20 @@ public static class ServiceRegistration
     {
         public Task<bool> IsEnabledAsync(CancellationToken cancellationToken = default)
         {
-            if (!OperatingSystem.IsWindows())
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var value = Environment.GetEnvironmentVariable("MKLINKUI_DEVELOPER_MODE");
+
+            if (!string.IsNullOrWhiteSpace(value))
             {
-                return Task.FromResult(true);
+                if (bool.TryParse(value, out var parsedBool))
+                    return Task.FromResult(parsedBool);
+
+                if (int.TryParse(value, out var parsedInt))
+                    return Task.FromResult(parsedInt != 0);
             }
 
-            return Task.FromResult(string.Equals(
-                Environment.GetEnvironmentVariable("MKLINKUI_DEVELOPER_MODE"),
-                "true", StringComparison.OrdinalIgnoreCase));
+            return Task.FromResult(!OperatingSystem.IsWindows());
         }
     }
 
@@ -96,6 +102,7 @@ public static class ServiceRegistration
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(linkPath);
             ArgumentException.ThrowIfNullOrWhiteSpace(targetPath);
+            cancellationToken.ThrowIfCancellationRequested();
 
             try
             {
@@ -118,10 +125,14 @@ public static class ServiceRegistration
             ArgumentNullException.ThrowIfNull(sourceFiles);
             ArgumentException.ThrowIfNullOrWhiteSpace(destinationFolder);
 
+            cancellationToken.ThrowIfCancellationRequested();
+
             var results = new List<SymlinkResult>();
 
             foreach (var source in sourceFiles)
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 if (string.IsNullOrWhiteSpace(source))
                 {
                     results.Add(new SymlinkResult(false, "Invalid source."));
