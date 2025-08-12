@@ -12,13 +12,20 @@ public sealed class DeveloperModeService(ILogger<DeveloperModeService>? logger =
 {
     private readonly ILogger<DeveloperModeService> _logger =
         logger ?? NullLogger<DeveloperModeService>.Instance;
+    private bool? _cached;
 
     public Task<bool> IsEnabledAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
+        if (_cached.HasValue)
+        {
+            return Task.FromResult(_cached.Value);
+        }
+
         if (!OperatingSystem.IsWindows())
         {
+            _cached = false;
             return Task.FromResult(false);
         }
 
@@ -26,7 +33,9 @@ public sealed class DeveloperModeService(ILogger<DeveloperModeService>? logger =
         {
             using var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\AppModelUnlock");
             var value = key?.GetValue("AllowDevelopmentWithoutDevLicense");
-            return Task.FromResult(value is int intVal && intVal != 0);
+            var enabled = value is int intVal && intVal != 0;
+            _cached = enabled;
+            return Task.FromResult(enabled);
         }
         catch (Exception ex)
         {

@@ -82,6 +82,7 @@ public class IndexModelTests
         model.Message.Should().Be("An unexpected error occurred while creating file symlinks.");
     }
 
+
     private sealed class ThrowingDeveloperModeService : IDeveloperModeService
     {
         private bool first = true;
