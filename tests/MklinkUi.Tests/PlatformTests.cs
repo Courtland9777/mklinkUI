@@ -1,4 +1,3 @@
-using System;
 using System.Reflection;
 using FluentAssertions;
 using Xunit;
@@ -10,10 +9,7 @@ public class PlatformTests
     [Fact]
     public void NonWindows_production_startup_throws()
     {
-        if (OperatingSystem.IsWindows())
-        {
-            return; // Test only relevant on non-Windows systems
-        }
+        if (OperatingSystem.IsWindows()) return; // Test only relevant on non-Windows systems
 
         var original = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT");
         Environment.SetEnvironmentVariable("DOTNET_ENVIRONMENT", "Production");
