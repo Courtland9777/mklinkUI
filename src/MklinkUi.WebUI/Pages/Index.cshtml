@@ -11,7 +11,9 @@
     <div class="card-body">
         <div class="mb-3">
             <label class="form-label">Developer Mode:</label>
-            <span class="fw-bold @(Model.DeveloperModeEnabled ? "text-success" : "text-danger")">
+            <span class="fw-bold @(Model.DeveloperModeEnabled ? "text-success" : "text-danger")"
+                  aria-label='Developer mode @(Model.DeveloperModeEnabled ? "enabled" : "disabled")'>
+                <i class="fa-solid @(Model.DeveloperModeEnabled ? "fa-check text-success" : "fa-times text-danger") me-1" aria-hidden="true"></i>
                 @(Model.DeveloperModeEnabled ? "Enabled" : "Disabled")
             </span>
         </div>
