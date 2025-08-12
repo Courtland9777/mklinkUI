@@ -1,11 +1,15 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Logging;
 using MklinlUi.Core;
 using System.IO;
 
 namespace MklinlUi.WebUI.Pages;
 
-public sealed class IndexModel(SymlinkManager manager, IDeveloperModeService developerModeService) : PageModel
+public sealed class IndexModel(
+    SymlinkManager manager,
+    IDeveloperModeService developerModeService,
+    ILogger<IndexModel> logger) : PageModel
 {
     [BindProperty] public string LinkType { get; set; } = "File";
 
@@ -40,9 +44,18 @@ public sealed class IndexModel(SymlinkManager manager, IDeveloperModeService dev
                 return Page();
             }
 
-            var result = await manager.CreateSymlinkAsync(DestinationPath, SourcePath);
-            Success = result.Success;
-            Message = result.Success ? "Symlink created successfully." : result.ErrorMessage;
+            try
+            {
+                var result = await manager.CreateSymlinkAsync(DestinationPath, SourcePath);
+                Success = result.Success;
+                Message = result.Success ? "Symlink created successfully." : result.ErrorMessage;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error creating symlink from {Source} to {Destination}", SourcePath, DestinationPath);
+                Success = false;
+                Message = "An unexpected error occurred while creating the symlink.";
+            }
             return Page();
         }
 
@@ -74,7 +87,19 @@ public sealed class IndexModel(SymlinkManager manager, IDeveloperModeService dev
             return Page();
         }
 
-        var results = await manager.CreateFileSymlinksAsync(sourceFiles, DestinationFolder);
+        IReadOnlyList<SymlinkResult> results;
+        try
+        {
+            results = await manager.CreateFileSymlinksAsync(sourceFiles, DestinationFolder);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error creating file symlinks in {DestinationFolder}", DestinationFolder);
+            Success = false;
+            Message = "An unexpected error occurred while creating file symlinks.";
+            return Page();
+        }
+
         Success = results.All(r => r.Success);
         Message = string.Join("\n", sourceFiles.Select((s, i) =>
         {
