@@ -64,7 +64,7 @@ public sealed class IndexModel(
         }
 
         var sourceFiles = SourceFilePaths
-            .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .ToList();
 
         if (sourceFiles.Count == 0 || string.IsNullOrWhiteSpace(DestinationFolder))
