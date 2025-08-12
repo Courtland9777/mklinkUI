@@ -73,13 +73,31 @@ public class DeveloperModeServiceTests
         }
     }
 
-    private static void OverrideHKLM(RegistryKey key) =>
-        RegOverridePredefKey((UIntPtr)HKEY_LOCAL_MACHINE, key.Handle.DangerousGetHandle());
+    private static void OverrideHKLM(RegistryKey key)
+    {
+        var result = RegOverridePredefKey((UIntPtr)HKEY_LOCAL_MACHINE, key.Handle.DangerousGetHandle());
+        if (result != 0)
+        {
+            throw new InvalidOperationException($"RegOverridePredefKey failed with error {result}");
+        }
+    }
 
-    private static void OverrideHKLM(IntPtr handle) =>
-        RegOverridePredefKey((UIntPtr)HKEY_LOCAL_MACHINE, handle);
+    private static void OverrideHKLM(IntPtr handle)
+    {
+        var result = RegOverridePredefKey((UIntPtr)HKEY_LOCAL_MACHINE, handle);
+        if (result != 0)
+        {
+            throw new InvalidOperationException($"RegOverridePredefKey failed with error {result}");
+        }
+    }
 
-    private static void RestoreHKLM() =>
-        RegOverridePredefKey((UIntPtr)HKEY_LOCAL_MACHINE, IntPtr.Zero);
+    private static void RestoreHKLM()
+    {
+        var result = RegOverridePredefKey((UIntPtr)HKEY_LOCAL_MACHINE, IntPtr.Zero);
+        if (result != 0)
+        {
+            throw new InvalidOperationException($"RegOverridePredefKey failed with error {result}");
+        }
+    }
 }
 #endif
