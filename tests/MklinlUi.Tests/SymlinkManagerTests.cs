@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Moq;
+using Microsoft.Extensions.Logging;
 using MklinlUi.Core;
 using Xunit;
 
@@ -14,8 +15,9 @@ public class SymlinkManagerTests
         devService.Setup(d => d.IsEnabledAsync(It.IsAny<CancellationToken>())).ReturnsAsync(false);
 
         var symlinkService = new Mock<ISymlinkService>();
+        var logger = new Mock<ILogger<SymlinkManager>>();
 
-        var manager = new SymlinkManager(devService.Object, symlinkService.Object);
+        var manager = new SymlinkManager(devService.Object, symlinkService.Object, logger.Object);
 
         var result = await manager.CreateSymlinkAsync("/link", "/target");
 
@@ -33,8 +35,9 @@ public class SymlinkManagerTests
         var symlinkService = new Mock<ISymlinkService>();
         symlinkService.Setup(s => s.CreateSymlinkAsync("/link", "/target", It.IsAny<CancellationToken>()))
                       .ReturnsAsync(new SymlinkResult(true));
+        var logger = new Mock<ILogger<SymlinkManager>>();
 
-        var manager = new SymlinkManager(devService.Object, symlinkService.Object);
+        var manager = new SymlinkManager(devService.Object, symlinkService.Object, logger.Object);
         var result = await manager.CreateSymlinkAsync("/link", "/target");
 
         result.Success.Should().BeTrue();
