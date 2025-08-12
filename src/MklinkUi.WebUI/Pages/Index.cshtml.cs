@@ -4,6 +4,8 @@ using MklinkUi.Core;
 
 namespace MklinkUi.WebUI.Pages;
 
+public sealed record SymlinkResultView(string Source, string Link, bool Success, string? ErrorMessage);
+
 public sealed class IndexModel(
     SymlinkManager manager,
     IDeveloperModeService developerModeService,
@@ -25,8 +27,7 @@ public sealed class IndexModel(
 
     public bool DeveloperModeEnabled { get; private set; }
 
-    public string? Message { get; private set; }
-    public bool? Success { get; private set; }
+    public List<SymlinkResultView> Results { get; } = [];
 
     public async Task OnGetAsync()
     {
@@ -41,23 +42,23 @@ public sealed class IndexModel(
         {
             if (string.IsNullOrWhiteSpace(SourcePath) || string.IsNullOrWhiteSpace(DestinationPath))
             {
-                Success = false;
-                Message = "Source and destination paths are required.";
+                Results.Add(new SymlinkResultView(SourcePath, DestinationPath, false,
+                    "Source and destination paths are required."));
                 return Page();
             }
 
             try
             {
                 var result = await manager.CreateSymlinkAsync(DestinationPath, SourcePath);
-                Success = result.Success;
-                Message = result.Success ? "Symlink created successfully." : result.ErrorMessage;
+                Results.Add(new SymlinkResultView(SourcePath, DestinationPath, result.Success,
+                    result.Success ? "OK" : result.ErrorMessage));
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error creating symlink from {Source} to {Destination}", SourcePath,
                     DestinationPath);
-                Success = false;
-                Message = "An unexpected error occurred while creating the symlink.";
+                Results.Add(new SymlinkResultView(SourcePath, DestinationPath, false,
+                    "An unexpected error occurred while creating the symlink."));
             }
 
             return Page();
@@ -69,8 +70,8 @@ public sealed class IndexModel(
 
         if (sourceFiles.Count == 0 || string.IsNullOrWhiteSpace(DestinationFolder))
         {
-            Success = false;
-            Message = "Select at least one source file and a destination folder.";
+            Results.Add(new SymlinkResultView(string.Empty, DestinationFolder, false,
+                "Select at least one source file and a destination folder."));
             return Page();
         }
 
@@ -79,19 +80,20 @@ public sealed class IndexModel(
             var name = Path.GetFileName(path);
             if (string.IsNullOrWhiteSpace(name) || name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
             {
-                Success = false;
-                Message = "One or more file names are invalid.";
+                Results.Add(new SymlinkResultView(path,
+                    Path.Combine(DestinationFolder, name ?? string.Empty), false,
+                    "One or more file names are invalid."));
                 return Page();
             }
 
             if (!System.IO.File.Exists(path))
             {
-                Success = false;
-                Message = $"Source file not found: {path}.";
+                Results.Add(new SymlinkResultView(path,
+                    Path.Combine(DestinationFolder, name), false,
+                    $"Source file not found: {path}."));
                 return Page();
             }
         }
-
         IReadOnlyList<SymlinkResult> results;
         try
         {
@@ -100,8 +102,8 @@ public sealed class IndexModel(
         catch (Exception ex)
         {
             logger.LogError(ex, "Error creating file symlinks in {DestinationFolder}", DestinationFolder);
-            Success = false;
-            Message = "An unexpected error occurred while creating file symlinks.";
+            Results.Add(new SymlinkResultView(string.Empty, DestinationFolder, false,
+                "An unexpected error occurred while creating file symlinks."));
             return Page();
         }
 
@@ -109,18 +111,20 @@ public sealed class IndexModel(
         {
             logger.LogError("Symlink result count {ResultCount} does not match source file count {SourceCount}",
                 results.Count, sourceFiles.Count);
-            Success = false;
-            Message = "An unexpected error occurred while creating file symlinks.";
+            Results.Add(new SymlinkResultView(string.Empty, DestinationFolder, false,
+                "An unexpected error occurred while creating file symlinks."));
             return Page();
         }
 
-        Success = results.All(r => r.Success);
-        Message = string.Join("\n", sourceFiles.Select((s, i) =>
+        for (var i = 0; i < sourceFiles.Count; i++)
         {
-            var link = Path.Combine(DestinationFolder, Path.GetFileName(s));
+            var source = sourceFiles[i];
+            var link = Path.Combine(DestinationFolder, Path.GetFileName(source));
             var r = results[i];
-            return $"{s} -> {link}: {(r.Success ? "OK" : r.ErrorMessage)}";
-        }));
+            Results.Add(new SymlinkResultView(source, link, r.Success,
+                r.Success ? "OK" : r.ErrorMessage));
+        }
+
         return Page();
     }
 }
