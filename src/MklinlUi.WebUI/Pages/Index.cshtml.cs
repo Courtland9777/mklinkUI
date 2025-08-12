@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Logging;
 using MklinlUi.Core;
-using System.IO;
 
 namespace MklinlUi.WebUI.Pages;
 
@@ -56,15 +54,17 @@ public sealed class IndexModel(
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error creating symlink from {Source} to {Destination}", SourcePath, DestinationPath);
+                logger.LogError(ex, "Error creating symlink from {Source} to {Destination}", SourcePath,
+                    DestinationPath);
                 Success = false;
                 Message = "An unexpected error occurred while creating the symlink.";
             }
+
             return Page();
         }
 
         var sourceFiles = SourceFilePaths
-            .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .ToList();
 
         if (sourceFiles.Count == 0 || string.IsNullOrWhiteSpace(DestinationFolder))

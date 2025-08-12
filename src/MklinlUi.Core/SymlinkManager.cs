@@ -50,7 +50,7 @@ public sealed class SymlinkManager(
         if (!await developerModeService.IsEnabledAsync(cancellationToken).ConfigureAwait(false))
         {
             logger.LogWarning("Developer mode not enabled.");
-            return sources.Select(_ => new SymlinkResult(false, "Developer mode not enabled.")).ToList();
+            return [.. sources.Select(_ => new SymlinkResult(false, "Developer mode not enabled."))];
         }
 
         try
@@ -62,7 +62,7 @@ public sealed class SymlinkManager(
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to create file symlinks in {DestinationFolder}", destinationFolder);
-            return sources.Select(_ => new SymlinkResult(false, "Failed to create symlinks.")).ToList();
+            return [.. sources.Select(_ => new SymlinkResult(false, "Failed to create symlinks."))];
         }
     }
 }
