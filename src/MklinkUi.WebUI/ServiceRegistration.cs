@@ -78,14 +78,18 @@ public static class ServiceRegistration
     {
         public Task<bool> IsEnabledAsync(CancellationToken cancellationToken = default)
         {
-            if (!OperatingSystem.IsWindows())
+            var value = Environment.GetEnvironmentVariable("MKLINKUI_DEVELOPER_MODE");
+
+            if (!string.IsNullOrWhiteSpace(value))
             {
-                return Task.FromResult(true);
+                if (bool.TryParse(value, out var parsedBool))
+                    return Task.FromResult(parsedBool);
+
+                if (int.TryParse(value, out var parsedInt))
+                    return Task.FromResult(parsedInt != 0);
             }
 
-            return Task.FromResult(string.Equals(
-                Environment.GetEnvironmentVariable("MKLINKUI_DEVELOPER_MODE"),
-                "true", StringComparison.OrdinalIgnoreCase));
+            return Task.FromResult(!OperatingSystem.IsWindows());
         }
     }
 
