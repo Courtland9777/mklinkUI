@@ -51,7 +51,7 @@ public static class ServiceRegistration
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to load {AssemblyPath}", assemblyPath);
-            throw;
+            return (new DefaultDeveloperModeService(), new DefaultSymlinkService());
         }
 
         static T? Create<T>(Assembly assembly) where T : class
