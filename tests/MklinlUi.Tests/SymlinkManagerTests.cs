@@ -1,7 +1,7 @@
 using FluentAssertions;
-using Moq;
 using Microsoft.Extensions.Logging;
 using MklinlUi.Core;
+using Moq;
 using Xunit;
 
 namespace MklinlUi.Tests;
@@ -23,7 +23,9 @@ public class SymlinkManagerTests
 
         result.Success.Should().BeFalse();
         result.ErrorMessage.Should().Be("Developer mode not enabled.");
-        symlinkService.Verify(s => s.CreateSymlinkAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        symlinkService.Verify(
+            s => s.CreateSymlinkAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]
@@ -34,7 +36,7 @@ public class SymlinkManagerTests
 
         var symlinkService = new Mock<ISymlinkService>();
         symlinkService.Setup(s => s.CreateSymlinkAsync("/link", "/target", It.IsAny<CancellationToken>()))
-                      .ReturnsAsync(new SymlinkResult(true));
+            .ReturnsAsync(new SymlinkResult(true));
         var logger = new Mock<ILogger<SymlinkManager>>();
 
         var manager = new SymlinkManager(devService.Object, symlinkService.Object, logger.Object);
@@ -49,13 +51,16 @@ public class SymlinkManagerTests
     {
         var devService = new Mock<IDeveloperModeService>();
         devService.Setup(d => d.IsEnabledAsync(It.IsAny<CancellationToken>()))
-                  .ThrowsAsync(new InvalidOperationException("registry error"));
+            .ThrowsAsync(new InvalidOperationException("registry error"));
 
         var symlinkService = new Mock<ISymlinkService>();
+        var logger = new Mock<ILogger<SymlinkManager>>();
 
-        var manager = new SymlinkManager(devService.Object, symlinkService.Object);
+        var manager = new SymlinkManager(devService.Object, symlinkService.Object, logger.Object);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => manager.CreateSymlinkAsync("/link", "/target"));
-        symlinkService.Verify(s => s.CreateSymlinkAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        symlinkService.Verify(
+            s => s.CreateSymlinkAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 }
