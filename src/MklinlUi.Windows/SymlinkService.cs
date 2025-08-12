@@ -17,6 +17,11 @@ public sealed class SymlinkService(ILogger<SymlinkService>? logger = null) : ISy
         ArgumentException.ThrowIfNullOrWhiteSpace(linkPath);
         ArgumentException.ThrowIfNullOrWhiteSpace(targetPath);
 
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (File.Exists(linkPath) || Directory.Exists(linkPath))
+            return Task.FromResult(new SymlinkResult(false, "Link already exists."));
+
         try
         {
             if (Directory.Exists(targetPath))
