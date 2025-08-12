@@ -26,7 +26,20 @@ async function browseFolder(inputId) {
     if (window.showDirectoryPicker) {
         try {
             const handle = await window.showDirectoryPicker();
-            document.getElementById(inputId).value = handle.name;
+            let path = handle.name;
+
+            // Non-standard: some browsers expose a full path on the handle
+            if ('path' in handle) {
+                path = handle.path;
+            } else if (handle.resolve && navigator.storage?.getDirectory) {
+                try {
+                    const root = await navigator.storage.getDirectory();
+                    const segments = await root.resolve(handle);
+                    if (segments) path = segments.join('/');
+                } catch { }
+            }
+
+            document.getElementById(inputId).value = path;
         } catch { }
         return;
     }
@@ -35,7 +48,11 @@ async function browseFolder(inputId) {
     input.webkitdirectory = true;
     input.onchange = e => {
         const file = e.target.files[0];
-        if (file) document.getElementById(inputId).value = file.webkitRelativePath.split('/')[0];
+        if (file) {
+            // Prefer the full path when available (e.g., Electron or Chromium-based browsers)
+            const path = file.path || file.webkitRelativePath.split('/')[0];
+            document.getElementById(inputId).value = path;
+        }
     };
     input.click();
 }

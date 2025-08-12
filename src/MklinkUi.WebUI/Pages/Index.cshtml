@@ -46,6 +46,7 @@
                     <input class="form-control" id="destFolder" asp-for="DestinationFolder" placeholder="C:\links" />
                     <button type="button" class="btn btn-outline-secondary" onclick="browseFolder('destFolder')"><i class="fa-solid fa-folder-open me-1"></i>Browse</button>
                 </div>
+                <small class="form-text text-muted">Full path support depends on your browser. If only the folder name appears, enter the full path manually.</small>
                 <div class="form-text">Enter the absolute folder path where links will be created, e.g., C:\links</div>
             </div>
 
@@ -55,6 +56,7 @@
                     <input class="form-control" id="sourcePath" asp-for="SourcePath" placeholder="C:\source\folder" />
                     <button type="button" class="btn btn-outline-secondary" onclick="browseFolder('sourcePath')"><i class="fa-solid fa-folder-open me-1"></i>Browse</button>
                 </div>
+                <small class="form-text text-muted">Full path support depends on your browser. If only the folder name appears, enter the full path manually.</small>
                 <div class="form-text">Enter the absolute source folder path, e.g., C:\source\folder</div>
             </div>
 
@@ -64,6 +66,7 @@
                     <input class="form-control" id="destPath" asp-for="DestinationPath" placeholder="C:\destination\folder" />
                     <button type="button" class="btn btn-outline-secondary" onclick="browseFolder('destPath')"><i class="fa-solid fa-folder-open me-1"></i>Browse</button>
                 </div>
+                <small class="form-text text-muted">Full path support depends on your browser. If only the folder name appears, enter the full path manually.</small>
                 <div class="form-text">Enter the absolute destination folder path, e.g., C:\destination\folder</div>
             </div>
 
