@@ -43,4 +43,19 @@ public class SymlinkManagerTests
         result.Success.Should().BeTrue();
         symlinkService.Verify(s => s.CreateSymlinkAsync("/link", "/target", It.IsAny<CancellationToken>()), Times.Once);
     }
+
+    [Fact]
+    public async Task CreateSymlinkAsync_propagates_exception_when_developer_mode_service_errors()
+    {
+        var devService = new Mock<IDeveloperModeService>();
+        devService.Setup(d => d.IsEnabledAsync(It.IsAny<CancellationToken>()))
+                  .ThrowsAsync(new InvalidOperationException("registry error"));
+
+        var symlinkService = new Mock<ISymlinkService>();
+
+        var manager = new SymlinkManager(devService.Object, symlinkService.Object);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => manager.CreateSymlinkAsync("/link", "/target"));
+        symlinkService.Verify(s => s.CreateSymlinkAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
 }
