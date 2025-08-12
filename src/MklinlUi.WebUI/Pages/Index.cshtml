@@ -16,7 +16,7 @@
             </span>
         </div>
 
-        <form method="post" enctype="multipart/form-data">
+        <form method="post">
             <div class="mb-3">
                 <label class="form-label" asp-for="LinkType">Symlink Type</label>
                 <div>
@@ -31,12 +31,8 @@
                 </div>
             </div>
             <div class="mb-3" id="fileInputs">
-                <label class="form-label" asp-for="SourceFiles">Source Files</label>
-                <div class="input-group">
-                    <input class="form-control" id="sourceFiles" readonly />
-                    <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('sourceFilesInput').click()"><i class="fa-solid fa-folder-open me-1"></i>Browse</button>
-                </div>
-                <input class="d-none" asp-for="SourceFiles" id="sourceFilesInput" type="file" multiple onchange="document.getElementById('sourceFiles').value = Array.from(this.files).map(f => f.name).join(', ')">
+                <label class="form-label" asp-for="SourceFilePaths">Source File Paths</label>
+                <textarea class="form-control" asp-for="SourceFilePaths" rows="3"></textarea>
             </div>
 
             <div class="mb-3" id="fileDest">
