@@ -3,6 +3,8 @@ using System.Net.Sockets;
 using Microsoft.Extensions.Logging;
 using MklinlUi.Core;
 using MklinlUi.WebUI;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,7 +39,10 @@ static int FindPort(int start, int end, ILogger logger)
 }
 
 builder.Services.AddRazorPages();
-builder.Services.AddPlatformServices();
+using var serviceProvider = builder.Services.BuildServiceProvider();
+var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+var logger = loggerFactory.CreateLogger("ServiceRegistration");
+builder.Services.AddPlatformServices(logger);
 builder.Services.AddSingleton<SymlinkManager>();
 
 var configuredUrls = builder.Configuration["ASPNETCORE_URLS"];

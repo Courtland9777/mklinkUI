@@ -1,21 +1,25 @@
+using System;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using MklinlUi.Core;
+using Microsoft.Extensions.Logging;
 
 namespace MklinlUi.WebUI;
 
 public static class ServiceRegistration
 {
-    public static IServiceCollection AddPlatformServices(this IServiceCollection services)
+    public static IServiceCollection AddPlatformServices(this IServiceCollection services,
+        ILogger logger)
     {
         ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(logger);
 
         var assemblyName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "MklinlUi.Windows.dll"
             : "MklinlUi.Fakes.dll";
         var assemblyPath = Path.Combine(AppContext.BaseDirectory, assemblyName);
 
-        var (dev, sym) = TryLoadServices(assemblyPath);
+        var (dev, sym) = TryLoadServices(assemblyPath, logger);
 
         services.AddSingleton(dev);
         services.AddSingleton(sym);
@@ -23,27 +27,32 @@ public static class ServiceRegistration
         return services;
     }
 
-    private static (IDeveloperModeService dev, ISymlinkService sym) TryLoadServices(string assemblyPath)
+    private static (IDeveloperModeService dev, ISymlinkService sym) TryLoadServices(string assemblyPath,
+        ILogger logger)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(assemblyPath);
+        ArgumentNullException.ThrowIfNull(logger);
 
         try
         {
-            if (File.Exists(assemblyPath))
+            if (!File.Exists(assemblyPath))
             {
-                var assembly = Assembly.LoadFrom(assemblyPath);
-                var dev = Create<IDeveloperModeService>(assembly);
-                var sym = Create<ISymlinkService>(assembly);
-                if (dev != null && sym != null)
-                    return (dev, sym);
+                throw new FileNotFoundException("Service assembly not found.", assemblyPath);
             }
+
+            var assembly = Assembly.LoadFrom(assemblyPath);
+            var dev = Create<IDeveloperModeService>(assembly);
+            var sym = Create<ISymlinkService>(assembly);
+            if (dev != null && sym != null)
+                return (dev, sym);
+
+            throw new InvalidOperationException($"Required services not found in {assemblyPath}.");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Failed to load {assemblyPath}: {ex.Message}");
+            logger.LogError(ex, "Failed to load {AssemblyPath}", assemblyPath);
+            throw;
         }
-
-        return (new DefaultDeveloperModeService(), new DefaultSymlinkService());
 
         static T? Create<T>(Assembly assembly) where T : class
         {
@@ -55,7 +64,10 @@ public static class ServiceRegistration
 
     private sealed class DefaultDeveloperModeService : IDeveloperModeService
     {
-        public Task<bool> IsEnabledAsync(CancellationToken cancellationToken = default) => Task.FromResult(true);
+        public Task<bool> IsEnabledAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult(string.Equals(
+                Environment.GetEnvironmentVariable("MKLINKUI_DEVELOPER_MODE"),
+                "true", StringComparison.OrdinalIgnoreCase));
     }
 
     private sealed class DefaultSymlinkService : ISymlinkService
