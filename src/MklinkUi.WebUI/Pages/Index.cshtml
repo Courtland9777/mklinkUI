@@ -32,31 +32,35 @@
             </div>
             <div class="mb-3" id="fileInputs">
                 <label class="form-label" asp-for="SourceFilePaths">Source File Paths</label>
-                <textarea class="form-control" asp-for="SourceFilePaths" rows="3"></textarea>
+                <textarea class="form-control" asp-for="SourceFilePaths" rows="3" placeholder="C:\source\file.txt"></textarea>
+                <div class="form-text">Enter one full file path per line, e.g., C:\source\file.txt</div>
             </div>
 
             <div class="mb-3" id="fileDest">
                 <label class="form-label" asp-for="DestinationFolder">Destination Folder</label>
                 <div class="input-group">
-                    <input class="form-control" id="destFolder" asp-for="DestinationFolder" />
+                    <input class="form-control" id="destFolder" asp-for="DestinationFolder" placeholder="C:\links" />
                     <button type="button" class="btn btn-outline-secondary" onclick="browseFolder('destFolder')"><i class="fa-solid fa-folder-open me-1"></i>Browse</button>
                 </div>
+                <div class="form-text">Enter the folder where links will be created, e.g., C:\links</div>
             </div>
 
             <div class="mb-3" id="folderSource">
                 <label class="form-label" asp-for="SourcePath">Source Path</label>
                 <div class="input-group">
-                    <input class="form-control" id="sourcePath" asp-for="SourcePath" />
+                    <input class="form-control" id="sourcePath" asp-for="SourcePath" placeholder="C:\source\folder" />
                     <button type="button" class="btn btn-outline-secondary" onclick="browseFolder('sourcePath')"><i class="fa-solid fa-folder-open me-1"></i>Browse</button>
                 </div>
+                <div class="form-text">Enter the source folder path, e.g., C:\source\folder</div>
             </div>
 
             <div class="mb-3" id="folderDest">
                 <label class="form-label" asp-for="DestinationPath">Destination Path</label>
                 <div class="input-group">
-                    <input class="form-control" id="destPath" asp-for="DestinationPath" />
+                    <input class="form-control" id="destPath" asp-for="DestinationPath" placeholder="C:\destination\folder" />
                     <button type="button" class="btn btn-outline-secondary" onclick="browseFolder('destPath')"><i class="fa-solid fa-folder-open me-1"></i>Browse</button>
                 </div>
+                <div class="form-text">Enter the destination folder path, e.g., C:\destination\folder</div>
             </div>
 
             <button type="submit" class="btn btn-primary"><i class="fa-solid fa-play me-1"></i>Create Symlink</button>
