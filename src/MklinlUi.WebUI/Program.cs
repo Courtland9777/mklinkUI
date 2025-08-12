@@ -1,32 +1,39 @@
 using System.Net;
 using System.Net.Sockets;
+using Microsoft.Extensions.Logging;
 using MklinlUi.Core;
 using MklinlUi.WebUI;
 
 var builder = WebApplication.CreateBuilder(args);
 
-static bool PortAvailable(int port)
+using var loggerFactory = LoggerFactory.Create(logging => logging.AddConsole());
+var logger = loggerFactory.CreateLogger<Program>();
+
+static bool PortAvailable(int port, ILogger logger)
 {
     try
     {
-        var listener = new TcpListener(IPAddress.Loopback, port);
+        using var listener = new TcpListener(IPAddress.Loopback, port);
         listener.Start();
         listener.Stop();
         return true;
     }
-    catch
+    catch (SocketException ex)
     {
+        logger.LogError(ex, "Port {Port} is unavailable", port);
         return false;
     }
 }
 
-static int FindPort(int start, int end)
+static int FindPort(int start, int end, ILogger logger)
 {
     for (var p = start; p <= end; p++)
     {
-        if (PortAvailable(p)) return p;
+        if (PortAvailable(p, logger)) return p;
     }
-    return start;
+    var message = $"No available ports between {start} and {end}.";
+    logger.LogError(message);
+    throw new InvalidOperationException(message);
 }
 
 builder.Services.AddRazorPages();
@@ -36,10 +43,10 @@ builder.Services.AddSingleton<SymlinkManager>();
 var configuredUrls = builder.Configuration["ASPNETCORE_URLS"];
 if (string.IsNullOrWhiteSpace(configuredUrls))
 {
-    var httpPort = builder.Configuration.GetValue<int?>("Server:Port") ?? FindPort(5280, 5299);
+    var httpPort = builder.Configuration.GetValue<int?>("Server:Port") ?? FindPort(5280, 5299, logger);
     if (builder.Configuration.GetSection("Kestrel:Certificates:Default").Exists())
     {
-        var httpsPort = FindPort(5281, 5299);
+        var httpsPort = FindPort(5281, 5299, logger);
         builder.WebHost.UseUrls($"http://localhost:{httpPort}", $"https://localhost:{httpsPort}");
     }
     else
