@@ -23,5 +23,6 @@
   <ItemGroup>
     <ProjectReference Include="../../src/MklinlUi.Core/MklinlUi.Core.csproj" />
     <ProjectReference Include="../../src/MklinlUi.Fakes/MklinlUi.Fakes.csproj" />
+    <ProjectReference Include="../../src/MklinlUi.WebUI/MklinlUi.WebUI.csproj" />
   </ItemGroup>
 </Project>
