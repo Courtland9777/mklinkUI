@@ -8,12 +8,12 @@ using Xunit;
 
 namespace MklinlUi.Windows.Tests;
 
-public class DeveloperModeServiceTests
+public partial class DeveloperModeServiceTests
 {
     private const uint HKEY_LOCAL_MACHINE = 0x80000002;
 
-    [DllImport("advapi32.dll", SetLastError = true)]
-    private static extern int RegOverridePredefKey(UIntPtr hKey, IntPtr hNewKey);
+    [LibraryImport("advapi32.dll", SetLastError = true)]
+    private static partial int RegOverridePredefKey(UIntPtr hKey, IntPtr hNewKey);
 
     [Fact]
     public async Task IsEnabledAsync_returns_false_on_non_Windows()
