@@ -1,9 +1,14 @@
+using Microsoft.Extensions.Logging;
+
 namespace MklinlUi.Core;
 
 /// <summary>
 ///     Coordinates symbolic link creation using provided services.
 /// </summary>
-public sealed class SymlinkManager(IDeveloperModeService developerModeService, ISymlinkService symlinkService)
+public sealed class SymlinkManager(
+    IDeveloperModeService developerModeService,
+    ISymlinkService symlinkService,
+    ILogger<SymlinkManager> logger)
 {
     /// <summary>
     ///     Creates a symbolic link if developer mode is enabled.
@@ -24,7 +29,8 @@ public sealed class SymlinkManager(IDeveloperModeService developerModeService, I
         }
         catch (Exception ex)
         {
-            return new SymlinkResult(false, ex.Message);
+            logger.LogError(ex, "Failed to create symlink from {LinkPath} to {TargetPath}", linkPath, targetPath);
+            return new SymlinkResult(false, "Failed to create symlink.");
         }
     }
 
@@ -47,7 +53,8 @@ public sealed class SymlinkManager(IDeveloperModeService developerModeService, I
         }
         catch (Exception ex)
         {
-            return [new SymlinkResult(false, ex.Message)];
+            logger.LogError(ex, "Failed to create file symlinks in {DestinationFolder}", destinationFolder);
+            return [new SymlinkResult(false, "Failed to create symlinks.")];
         }
     }
 }

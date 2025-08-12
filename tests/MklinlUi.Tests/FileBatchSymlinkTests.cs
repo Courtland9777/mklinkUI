@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using MklinlUi.Core;
 using MklinlUi.Fakes;
 using Xunit;
@@ -11,7 +12,7 @@ public class FileBatchSymlinkTests
     public async Task CreateFileSymlinksAsync_creates_links_for_each_file()
     {
         var service = new FakeSymlinkService();
-        var manager = new SymlinkManager(new FakeDeveloperModeService(), service);
+        var manager = new SymlinkManager(new FakeDeveloperModeService(), service, NullLogger<SymlinkManager>.Instance);
 
         const string dest = "/dest";
         var sources = new[] { Path.Combine("/src", "a.txt"), Path.Combine("/src", "b.txt") };
@@ -27,7 +28,7 @@ public class FileBatchSymlinkTests
     public async Task CreateFileSymlinksAsync_skips_on_name_collision()
     {
         var service = new FakeSymlinkService();
-        var manager = new SymlinkManager(new FakeDeveloperModeService(), service);
+        var manager = new SymlinkManager(new FakeDeveloperModeService(), service, NullLogger<SymlinkManager>.Instance);
 
         var sources = new[] { "/src/a.txt", "/other/a.txt" }; // same file name
         var results = await manager.CreateFileSymlinksAsync(sources, "/dest");
@@ -41,7 +42,7 @@ public class FileBatchSymlinkTests
     public async Task CreateFileSymlinksAsync_returns_failure_for_invalid_source()
     {
         var service = new FakeSymlinkService();
-        var manager = new SymlinkManager(new FakeDeveloperModeService(), service);
+        var manager = new SymlinkManager(new FakeDeveloperModeService(), service, NullLogger<SymlinkManager>.Instance);
 
         var results = await manager.CreateFileSymlinksAsync([string.Empty], "/dest");
 
