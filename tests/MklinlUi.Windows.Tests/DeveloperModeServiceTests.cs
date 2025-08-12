@@ -8,21 +8,21 @@ using Xunit;
 
 namespace MklinlUi.Windows.Tests;
 
-public partial class DeveloperModeServiceTests
+public class DeveloperModeServiceTests
 {
     private const uint HKEY_LOCAL_MACHINE = 0x80000002;
 
     [LibraryImport("advapi32.dll", SetLastError = true)]
-    private static partial int RegOverridePredefKey(UIntPtr hKey, IntPtr hNewKey);
+    private static int RegOverridePredefKey(UIntPtr hKey, IntPtr hNewKey)
+    {
+        throw new NotImplementedException();
+    }
 
     [Fact]
     public async Task IsEnabledAsync_returns_false_on_non_Windows()
     {
         var service = new DeveloperModeService();
-        if (OperatingSystem.IsWindows())
-        {
-            return; // environment cannot verify non-Windows path
-        }
+        if (OperatingSystem.IsWindows()) return; // environment cannot verify non-Windows path
 
         var result = await service.IsEnabledAsync();
         result.Should().BeFalse();
@@ -32,11 +32,12 @@ public partial class DeveloperModeServiceTests
     public async Task IsEnabledAsync_returns_true_when_registry_value_is_nonzero()
     {
         using var root = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Default)
-            .CreateSubKey("TestDevMode", writable: true);
+            .CreateSubKey("TestDevMode", true);
         OverrideHKLM(root);
         try
         {
-            using var sub = Registry.LocalMachine.CreateSubKey(@"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\AppModelUnlock");
+            using var sub =
+                Registry.LocalMachine.CreateSubKey(@"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\AppModelUnlock");
             sub.SetValue("AllowDevelopmentWithoutDevLicense", 1, RegistryValueKind.DWord);
 
             var service = new DeveloperModeService();
@@ -47,7 +48,7 @@ public partial class DeveloperModeServiceTests
         finally
         {
             RestoreHKLM();
-            Registry.CurrentUser.DeleteSubKeyTree("TestDevMode", throwOnMissingSubKey: false);
+            Registry.CurrentUser.DeleteSubKeyTree("TestDevMode", false);
         }
     }
 
@@ -55,7 +56,7 @@ public partial class DeveloperModeServiceTests
     public async Task IsEnabledAsync_wraps_exceptions_from_registry_access()
     {
         using var root = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Default)
-            .CreateSubKey("TestDevMode", writable: true);
+            .CreateSubKey("TestDevMode", true);
         var handle = root.Handle.DangerousGetHandle();
         root.Dispose();
         OverrideHKLM(handle);
@@ -69,35 +70,26 @@ public partial class DeveloperModeServiceTests
         finally
         {
             RestoreHKLM();
-            Registry.CurrentUser.DeleteSubKeyTree("TestDevMode", throwOnMissingSubKey: false);
+            Registry.CurrentUser.DeleteSubKeyTree("TestDevMode", false);
         }
     }
 
     private static void OverrideHKLM(RegistryKey key)
     {
-        var result = RegOverridePredefKey((UIntPtr)HKEY_LOCAL_MACHINE, key.Handle.DangerousGetHandle());
-        if (result != 0)
-        {
-            throw new InvalidOperationException($"RegOverridePredefKey failed with error {result}");
-        }
+        var result = RegOverridePredefKey(HKEY_LOCAL_MACHINE, key.Handle.DangerousGetHandle());
+        if (result != 0) throw new InvalidOperationException($"RegOverridePredefKey failed with error {result}");
     }
 
     private static void OverrideHKLM(IntPtr handle)
     {
-        var result = RegOverridePredefKey((UIntPtr)HKEY_LOCAL_MACHINE, handle);
-        if (result != 0)
-        {
-            throw new InvalidOperationException($"RegOverridePredefKey failed with error {result}");
-        }
+        var result = RegOverridePredefKey(HKEY_LOCAL_MACHINE, handle);
+        if (result != 0) throw new InvalidOperationException($"RegOverridePredefKey failed with error {result}");
     }
 
     private static void RestoreHKLM()
     {
-        var result = RegOverridePredefKey((UIntPtr)HKEY_LOCAL_MACHINE, IntPtr.Zero);
-        if (result != 0)
-        {
-            throw new InvalidOperationException($"RegOverridePredefKey failed with error {result}");
-        }
+        var result = RegOverridePredefKey(HKEY_LOCAL_MACHINE, IntPtr.Zero);
+        if (result != 0) throw new InvalidOperationException($"RegOverridePredefKey failed with error {result}");
     }
 }
 #endif
