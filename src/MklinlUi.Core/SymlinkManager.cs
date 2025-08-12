@@ -20,7 +20,13 @@ public sealed class SymlinkManager(
         ArgumentException.ThrowIfNullOrWhiteSpace(targetPath);
 
         if (!await developerModeService.IsEnabledAsync(cancellationToken).ConfigureAwait(false))
+        {
+            logger.LogWarning(
+                "Developer mode not enabled; skipping symlink from {LinkPath} to {TargetPath}",
+                linkPath,
+                targetPath);
             return new SymlinkResult(false, "Developer mode not enabled.");
+        }
 
         try
         {
@@ -44,7 +50,12 @@ public sealed class SymlinkManager(
         ArgumentException.ThrowIfNullOrWhiteSpace(destinationFolder);
 
         if (!await developerModeService.IsEnabledAsync(cancellationToken).ConfigureAwait(false))
+        {
+            logger.LogWarning(
+                "Developer mode not enabled; skipping file symlinks in {DestinationFolder}",
+                destinationFolder);
             return [new SymlinkResult(false, "Developer mode not enabled.")];
+        }
 
         try
         {
