@@ -77,7 +77,10 @@
                 <div class="form-text">Enter the absolute destination folder path, e.g., C:\destination\folder</div>
             </div>
 
-            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-play me-1"></i>Create Symlink</button>
+            <button type="submit" id="submitButton" class="btn btn-primary">
+                <i class="fa-solid fa-play me-1"></i>Create Symlink
+                <span id="submitSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+            </button>
         </form>
     </div>
 </div>

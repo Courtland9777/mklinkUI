@@ -69,4 +69,18 @@ window.addEventListener('load', () => {
     document.getElementById('linkTypeFile').addEventListener('change', toggleInputs);
     document.getElementById('linkTypeFolder').addEventListener('change', toggleInputs);
     toggleInputs();
+
+    const submitButton = document.getElementById('submitButton');
+    const spinner = document.getElementById('submitSpinner');
+    if (submitButton && spinner) {
+        const form = submitButton.closest('form');
+        if (form) {
+            form.addEventListener('submit', () => {
+                submitButton.disabled = true;
+                spinner.classList.remove('d-none');
+            });
+        }
+        submitButton.disabled = false;
+        spinner.classList.add('d-none');
+    }
 });
