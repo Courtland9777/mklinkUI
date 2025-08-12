@@ -41,6 +41,7 @@
                     <input class="form-control" id="destFolder" asp-for="DestinationFolder" />
                     <button type="button" class="btn btn-outline-secondary" onclick="browseFolder('destFolder')"><i class="fa-solid fa-folder-open me-1"></i>Browse</button>
                 </div>
+                <small class="form-text text-muted">Full path support depends on your browser. If only the folder name appears, enter the full path manually.</small>
             </div>
 
             <div class="mb-3" id="folderSource">
@@ -49,6 +50,7 @@
                     <input class="form-control" id="sourcePath" asp-for="SourcePath" />
                     <button type="button" class="btn btn-outline-secondary" onclick="browseFolder('sourcePath')"><i class="fa-solid fa-folder-open me-1"></i>Browse</button>
                 </div>
+                <small class="form-text text-muted">Full path support depends on your browser. If only the folder name appears, enter the full path manually.</small>
             </div>
 
             <div class="mb-3" id="folderDest">
@@ -57,6 +59,7 @@
                     <input class="form-control" id="destPath" asp-for="DestinationPath" />
                     <button type="button" class="btn btn-outline-secondary" onclick="browseFolder('destPath')"><i class="fa-solid fa-folder-open me-1"></i>Browse</button>
                 </div>
+                <small class="form-text text-muted">Full path support depends on your browser. If only the folder name appears, enter the full path manually.</small>
             </div>
 
             <button type="submit" class="btn btn-primary"><i class="fa-solid fa-play me-1"></i>Create Symlink</button>
