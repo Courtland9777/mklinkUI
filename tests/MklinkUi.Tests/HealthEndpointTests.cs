@@ -5,9 +5,14 @@ using Xunit;
 
 namespace MklinkUi.Tests;
 
-public class HealthEndpointTests(WebApplicationFactory<Program> factory) : IClassFixture<WebApplicationFactory<Program>>
+public class HealthEndpointTests : IClassFixture<WebApplicationFactory<global::Program>>
 {
-    private readonly WebApplicationFactory<Program> _factory = factory;
+    private readonly WebApplicationFactory<global::Program> _factory;
+
+    public HealthEndpointTests(WebApplicationFactory<global::Program> factory)
+    {
+        _factory = factory;
+    }
 
     [Fact]
     public async Task Health_endpoint_returns_success()
