@@ -8,6 +8,7 @@ builder.Logging.AddConsole();
 builder.Services.AddRazorPages();
 builder.Services.AddPlatformServices();
 builder.Services.AddSingleton<SymlinkManager>();
+builder.Services.AddHealthChecks();
 
 var configuredUrls = builder.Configuration["ASPNETCORE_URLS"];
 if (string.IsNullOrWhiteSpace(configuredUrls))
@@ -26,6 +27,11 @@ if (string.IsNullOrWhiteSpace(configuredUrls))
 
 var app = builder.Build();
 
+if (!OperatingSystem.IsWindows() && !app.Environment.IsDevelopment())
+{
+    throw new PlatformNotSupportedException("MklinkUI is supported on Windows only outside development.");
+}
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
@@ -40,5 +46,8 @@ app.UseRouting();
 app.UseAuthorization();
 
 app.MapRazorPages();
+app.MapHealthChecks("/health");
 
 app.Run();
+
+public partial class Program { }

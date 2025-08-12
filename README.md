@@ -15,6 +15,8 @@ The solution (`MklinkUi.sln`) is composed of several projects, each with a disti
 ## Platform-specific service registration
 `ServiceRegistration.AddPlatformServices` checks the current OS and loads `MklinkUi.Windows.dll` or `MklinkUi.Fakes.dll` from the application directory using reflection. If neither assembly is found, basic default services are used that rely on the cross-platform `File.CreateSymbolicLink` API and assume Developer Mode is enabled.
 
+Outside of the Development environment the application verifies it is running on Windows and exits with a `PlatformNotSupportedException` on other operating systems.
+
 ## Building
 ### Non-Windows development
 Build the fake services and then the web app:
@@ -75,6 +77,11 @@ The dark-themed web interface centers its main card on screen for common desktop
 ## Ports
 
 By default the app binds to HTTP port **5280** (and HTTPS **5281** when a certificate is configured). Override with the `ASPNETCORE_URLS` environment variable or `Server:Port` in `appsettings.json`.
+
+
+## Health checks
+
+MklinkUI exposes a basic ASP.NET Core health check endpoint at `/health` to assist with monitoring and container orchestration.
 
 
 ## Continuous integration
