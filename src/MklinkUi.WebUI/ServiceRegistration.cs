@@ -78,6 +78,8 @@ public static class ServiceRegistration
     {
         public Task<bool> IsEnabledAsync(CancellationToken cancellationToken = default)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             var value = Environment.GetEnvironmentVariable("MKLINKUI_DEVELOPER_MODE");
 
             if (!string.IsNullOrWhiteSpace(value))
@@ -100,6 +102,7 @@ public static class ServiceRegistration
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(linkPath);
             ArgumentException.ThrowIfNullOrWhiteSpace(targetPath);
+            cancellationToken.ThrowIfCancellationRequested();
 
             try
             {
@@ -122,10 +125,14 @@ public static class ServiceRegistration
             ArgumentNullException.ThrowIfNull(sourceFiles);
             ArgumentException.ThrowIfNullOrWhiteSpace(destinationFolder);
 
+            cancellationToken.ThrowIfCancellationRequested();
+
             var results = new List<SymlinkResult>();
 
             foreach (var source in sourceFiles)
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 if (string.IsNullOrWhiteSpace(source))
                 {
                     results.Add(new SymlinkResult(false, "Invalid source."));

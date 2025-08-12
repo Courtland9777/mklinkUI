@@ -75,4 +75,63 @@ public class ServiceRegistrationTests
             Environment.SetEnvironmentVariable("MKLINKUI_DEVELOPER_MODE", originalEnv);
         }
     }
+
+    [Fact]
+    public async Task DefaultDeveloperModeService_Honors_Cancellation()
+    {
+        var services = new ServiceCollection();
+        services.AddLogging();
+
+        var originalBase = AppContext.BaseDirectory;
+        var tempDir = Directory.CreateTempSubdirectory();
+        AppDomain.CurrentDomain.SetData("APP_CONTEXT_BASE_DIRECTORY", tempDir.FullName);
+
+        try
+        {
+            services.AddPlatformServices();
+            using var provider = services.BuildServiceProvider();
+            var dev = provider.GetRequiredService<IDeveloperModeService>();
+            using var cts = new CancellationTokenSource();
+            cts.Cancel();
+
+            Func<Task> act = () => dev.IsEnabledAsync(cts.Token);
+            await act.Should().ThrowAsync<OperationCanceledException>();
+        }
+        finally
+        {
+            AppDomain.CurrentDomain.SetData("APP_CONTEXT_BASE_DIRECTORY", originalBase);
+            tempDir.Delete();
+        }
+    }
+
+    [Fact]
+    public async Task DefaultSymlinkService_Honors_Cancellation()
+    {
+        var services = new ServiceCollection();
+        services.AddLogging();
+
+        var originalBase = AppContext.BaseDirectory;
+        var tempDir = Directory.CreateTempSubdirectory();
+        AppDomain.CurrentDomain.SetData("APP_CONTEXT_BASE_DIRECTORY", tempDir.FullName);
+
+        try
+        {
+            services.AddPlatformServices();
+            using var provider = services.BuildServiceProvider();
+            var sym = provider.GetRequiredService<ISymlinkService>();
+            using var cts = new CancellationTokenSource();
+            cts.Cancel();
+
+            Func<Task> single = () => sym.CreateSymlinkAsync("a", "b", cts.Token);
+            await single.Should().ThrowAsync<OperationCanceledException>();
+
+            Func<Task> batch = () => sym.CreateFileSymlinksAsync(new[] { "a" }, "dest", cts.Token);
+            await batch.Should().ThrowAsync<OperationCanceledException>();
+        }
+        finally
+        {
+            AppDomain.CurrentDomain.SetData("APP_CONTEXT_BASE_DIRECTORY", originalBase);
+            tempDir.Delete();
+        }
+    }
 }
