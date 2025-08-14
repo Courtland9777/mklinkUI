@@ -12,8 +12,8 @@
         <div class="mb-3">
             <label class="form-label">Developer Mode:</label>
             <span class="fw-bold @(Model.DeveloperModeEnabled ? "text-success" : "text-danger")"
-                  aria-label='Developer mode @(Model.DeveloperModeEnabled ? "enabled" : "disabled")'>
-                <i class="fa-solid @(Model.DeveloperModeEnabled ? "fa-check text-success" : "fa-times text-danger") me-1" aria-hidden="true"></i>
+                  aria-label="Developer mode @(Model.DeveloperModeEnabled ? "enabled" : "disabled")">
+                <i class="fa-solid @(Model.DeveloperModeEnabled ? "fa-check text-success" : "fa-xmark text-danger") me-1" aria-hidden="true"></i>
                 @(Model.DeveloperModeEnabled ? "Enabled" : "Disabled")
             </span>
         </div>
@@ -36,14 +36,12 @@
             </div>
             <div class="mb-3" id="fileInputs">
                 <label class="form-label" asp-for="SourceFilePaths">Source File Paths</label>
-                <textarea class="form-control" asp-for="SourceFilePaths" rows="3"></textarea>
-                <span asp-validation-for="SourceFilePaths" class="text-danger"></span>
-                <textarea class="form-control" asp-for="SourceFilePaths" rows="3" placeholder="C:\source\file.txt"></textarea>
-                <div class="form-text">Enter one absolute file path per line, e.g., C:\source\file.txt</div>
                 <div class="input-group">
-                    <textarea class="form-control" asp-for="SourceFilePaths" rows="3"></textarea>
+                    <textarea class="form-control" asp-for="SourceFilePaths" rows="3" placeholder="C:\source\file.txt"></textarea>
                     <button type="button" class="btn btn-outline-secondary" onclick="browseFile('SourceFilePaths', true)"><i class="fa-solid fa-file-import me-1"></i>Browse Files…</button>
                 </div>
+                <span asp-validation-for="SourceFilePaths" class="text-danger"></span>
+                <div class="form-text">Enter one absolute file path per line, e.g., C:\source\file.txt</div>
             </div>
 
             <div class="mb-3" id="fileDest">

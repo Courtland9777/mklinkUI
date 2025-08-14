@@ -12,6 +12,18 @@ namespace MklinkUi.Tests;
 public class IndexModelTests
 {
     [Fact]
+    public async Task OnGetAsync_sets_DeveloperModeEnabled()
+    {
+        var devService = new FakeDeveloperModeService { Enabled = false };
+        var manager = new SymlinkManager(devService, new FakeSymlinkService(), NullLogger<SymlinkManager>.Instance);
+        var model = new IndexModel(manager, devService, NullLogger<IndexModel>.Instance);
+
+        await model.OnGetAsync();
+
+        model.DeveloperModeEnabled.Should().BeFalse();
+    }
+
+    [Fact]
     public async Task OnPostAsync_returns_error_for_invalid_filename()
     {
         var devService = new FakeDeveloperModeService();
@@ -88,6 +100,31 @@ public class IndexModelTests
         var result = model.Results[0];
         result.Success.Should().BeFalse();
         result.ErrorMessage.Should().Be("An unexpected error occurred while creating file symlinks.");
+    }
+
+    [Fact]
+    public async Task OnPostAsync_reports_when_developer_mode_disabled()
+    {
+        var tempFile = Path.GetTempFileName();
+        var tempDir = Directory.CreateTempSubdirectory();
+        var devService = new FakeDeveloperModeService { Enabled = false };
+        var manager = new SymlinkManager(devService, new FakeSymlinkService(), NullLogger<SymlinkManager>.Instance);
+        var model = new IndexModel(manager, devService, NullLogger<IndexModel>.Instance)
+        {
+            DestinationFolder = tempDir.FullName,
+            SourceFilePaths = tempFile
+        };
+
+        await model.OnPostAsync();
+
+        model.DeveloperModeEnabled.Should().BeFalse();
+        model.Results.Should().ContainSingle();
+        var result = model.Results[0];
+        result.Success.Should().BeFalse();
+        result.ErrorMessage.Should().Be("Developer mode not enabled.");
+
+        tempDir.Delete(true);
+        File.Delete(tempFile);
     }
 
 
