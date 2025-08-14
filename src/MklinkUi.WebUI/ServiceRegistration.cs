@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using MklinkUi.Core;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 
 namespace MklinkUi.WebUI;
 
@@ -15,7 +16,8 @@ public static class ServiceRegistration
         services.AddSingleton<ServicesWrapper>(sp =>
         {
             var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger("ServiceRegistration");
-            var (dev, sym) = LoadServices(logger);
+            var config = sp.GetRequiredService<IConfiguration>();
+            var (dev, sym) = LoadServices(logger, config);
             return new ServicesWrapper(dev, sym);
         });
 
@@ -27,20 +29,20 @@ public static class ServiceRegistration
 
         return services;
 
-        static (IDeveloperModeService dev, ISymlinkService sym) LoadServices(ILogger logger)
+        static (IDeveloperModeService dev, ISymlinkService sym) LoadServices(ILogger logger, IConfiguration config)
         {
             var assemblyName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
                 ? "MklinkUi.Windows.dll"
                 : "MklinkUi.Fakes.dll";
             var assemblyPath = Path.Combine(AppContext.BaseDirectory, assemblyName);
-            return TryLoadServices(assemblyPath, logger);
+            return TryLoadServices(assemblyPath, logger, config);
         }
     }
 
     private sealed record ServicesWrapper(IDeveloperModeService Dev, ISymlinkService Sym);
 
     private static (IDeveloperModeService dev, ISymlinkService sym) TryLoadServices(string assemblyPath,
-        ILogger logger)
+        ILogger logger, IConfiguration config)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(assemblyPath);
         ArgumentNullException.ThrowIfNull(logger);
@@ -63,7 +65,7 @@ public static class ServiceRegistration
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to load {AssemblyPath}", assemblyPath);
-            return (new DefaultDeveloperModeService(logger), new DefaultSymlinkService());
+            return (new DefaultDeveloperModeService(logger, config), new DefaultSymlinkService());
         }
 
         static T? Create<T>(Assembly assembly) where T : class
@@ -77,14 +79,19 @@ public static class ServiceRegistration
     private sealed class DefaultDeveloperModeService : IDeveloperModeService
     {
         private readonly ILogger _logger;
+        private readonly IConfiguration _config;
 
-        public DefaultDeveloperModeService(ILogger logger) => _logger = logger;
+        public DefaultDeveloperModeService(ILogger logger, IConfiguration config)
+        {
+            _logger = logger;
+            _config = config;
+        }
 
         public Task<bool> IsEnabledAsync(CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var value = Environment.GetEnvironmentVariable("MKLINKUI_DEVELOPER_MODE");
+            var value = _config["DeveloperMode"] ?? Environment.GetEnvironmentVariable("MKLINKUI_DEVELOPER_MODE");
 
             if (!string.IsNullOrWhiteSpace(value))
             {
@@ -94,12 +101,11 @@ public static class ServiceRegistration
                 if (int.TryParse(value, out var parsedInt))
                     return Task.FromResult(parsedInt != 0);
 
-                _logger.LogWarning("MKLINKUI_DEVELOPER_MODE value '{Value}' is invalid. Defaulting to disabled.", value);
+                _logger.LogWarning("Developer mode value '{Value}' is invalid. Defaulting to disabled.", value);
             }
             else
             {
-                _logger.LogWarning(
-                    "MKLINKUI_DEVELOPER_MODE environment variable is not set. Developer mode status cannot be determined.");
+                _logger.LogWarning("Developer mode value is not set. Developer mode status cannot be determined.");
             }
 
             return Task.FromResult(false);
