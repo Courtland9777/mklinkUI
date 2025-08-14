@@ -20,7 +20,7 @@ MklinkUI is a small utility for Windows 11 that creates symbolic links and displ
    dotnet test src/MklinkUI.Tests/MklinkUI.Tests.csproj
    ```
 
-Logs are written to `%AppData%/MklinkUI/app.log`.
+Logs are written to `%AppData%/MklinkUI/<Environment>/app.log`, where `<Environment>` comes from the `ASPNETCORE_ENVIRONMENT` variable. The application fails to start if this variable isn't set; `appsettings.json` provides a default of `Development`.
 
 ## Usage
 The application displays the current Developer Mode status. Symlink creation and installer features will be added in future iterations.
