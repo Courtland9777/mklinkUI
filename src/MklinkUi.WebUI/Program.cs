@@ -8,7 +8,6 @@ builder.Logging.AddConsole();
 builder.Services.AddRazorPages();
 builder.Services.AddPlatformServices();
 builder.Services.AddSingleton<SymlinkManager>();
-builder.Services.AddHealthChecks();
 
 var configuredUrls = builder.Configuration["ASPNETCORE_URLS"];
 if (string.IsNullOrWhiteSpace(configuredUrls))
@@ -46,7 +45,6 @@ app.UseRouting();
 app.UseAuthorization();
 
 app.MapRazorPages();
-app.MapHealthChecks("/health");
 
 app.Run();
 
