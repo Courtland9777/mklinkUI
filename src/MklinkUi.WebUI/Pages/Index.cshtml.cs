@@ -11,6 +11,7 @@ public sealed class IndexModel(
     IDeveloperModeService developerModeService,
     ILogger<IndexModel> logger) : PageModel
 {
+    private static readonly char[] NewLineSeparators = ['\r', '\n'];
     [BindProperty] public string LinkType { get; set; } = "File";
 
     /// <summary>
@@ -65,7 +66,7 @@ public sealed class IndexModel(
         }
 
         var sourceFiles = SourceFilePaths
-            .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Split(NewLineSeparators, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .ToList();
 
         if (sourceFiles.Count == 0 || string.IsNullOrWhiteSpace(DestinationFolder))
