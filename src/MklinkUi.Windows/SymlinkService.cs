@@ -7,9 +7,27 @@ namespace MklinkUi.Windows;
 /// <summary>
 ///     Windows implementation of <see cref="ISymlinkService" />.
 /// </summary>
-public sealed class SymlinkService(ILogger<SymlinkService>? logger = null) : ISymlinkService
+public sealed class SymlinkService : ISymlinkService
 {
-    private readonly ILogger<SymlinkService> _logger = logger ?? NullLogger<SymlinkService>.Instance;
+    private readonly ILogger<SymlinkService> _logger;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SymlinkService"/> class
+    /// using a <see cref="NullLogger"/> instance.
+    /// </summary>
+    public SymlinkService()
+        : this(null)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SymlinkService"/> class.
+    /// </summary>
+    /// <param name="logger">Optional logger instance.</param>
+    public SymlinkService(ILogger<SymlinkService>? logger)
+    {
+        _logger = logger ?? NullLogger<SymlinkService>.Instance;
+    }
 
     public Task<SymlinkResult> CreateSymlinkAsync(string linkPath, string targetPath,
         CancellationToken cancellationToken = default)
