@@ -5,11 +5,11 @@ using Xunit;
 
 namespace MklinkUi.Tests;
 
-public class HealthEndpointTests : IClassFixture<WebApplicationFactory<global::Program>>
+public class HealthEndpointTests : IClassFixture<WebApplicationFactory<Program>>
 {
-    private readonly WebApplicationFactory<global::Program> _factory;
+    private readonly WebApplicationFactory<Program> _factory;
 
-    public HealthEndpointTests(WebApplicationFactory<global::Program> factory)
+    public HealthEndpointTests(WebApplicationFactory<Program> factory)
     {
         _factory = factory;
     }
