@@ -16,6 +16,14 @@ public class DeveloperModeServiceTests
     private static extern int RegOverridePredefKey(UIntPtr hKey, IntPtr hNewKey);
 
     [Fact]
+    public void DeveloperModeService_can_be_activated_via_reflection()
+    {
+        var ctor = typeof(DeveloperModeService).GetConstructor(Type.EmptyTypes);
+        ctor.Should().NotBeNull();
+        Activator.CreateInstance(typeof(DeveloperModeService)).Should().NotBeNull();
+    }
+
+    [Fact]
     public async Task IsEnabledAsync_returns_false_on_non_Windows()
     {
         var service = new DeveloperModeService();
