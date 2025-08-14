@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using FluentAssertions;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MklinkUi.Core;
 using MklinkUi.WebUI;
@@ -16,6 +18,7 @@ public class ServiceRegistrationTests
         // Arrange
         var services = new ServiceCollection();
         services.AddLogging();
+        services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
 
         var originalBase = AppContext.BaseDirectory;
         var tempDir = Directory.CreateTempSubdirectory();
@@ -47,17 +50,24 @@ public class ServiceRegistrationTests
     [InlineData("false", false)]
     [InlineData("0", false)]
     [InlineData("invalid", false)]
-    public async Task DefaultDeveloperModeService_Reads_EnvironmentVariable(string? value, bool expected)
+    public async Task DefaultDeveloperModeService_Reads_Configuration(string? value, bool expected)
     {
         var services = new ServiceCollection();
         services.AddLogging();
 
+        var configBuilder = new ConfigurationBuilder();
+        if (value is not null)
+        {
+            configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["DeveloperMode"] = value
+            });
+        }
+        services.AddSingleton<IConfiguration>(configBuilder.Build());
+
         var originalBase = AppContext.BaseDirectory;
         var tempDir = Directory.CreateTempSubdirectory();
         AppDomain.CurrentDomain.SetData("APP_CONTEXT_BASE_DIRECTORY", tempDir.FullName);
-
-        var originalEnv = Environment.GetEnvironmentVariable("MKLINKUI_DEVELOPER_MODE");
-        Environment.SetEnvironmentVariable("MKLINKUI_DEVELOPER_MODE", value);
 
         try
         {
@@ -71,7 +81,6 @@ public class ServiceRegistrationTests
         {
             AppDomain.CurrentDomain.SetData("APP_CONTEXT_BASE_DIRECTORY", originalBase);
             tempDir.Delete();
-            Environment.SetEnvironmentVariable("MKLINKUI_DEVELOPER_MODE", originalEnv);
         }
     }
 
@@ -80,6 +89,7 @@ public class ServiceRegistrationTests
     {
         var services = new ServiceCollection();
         services.AddLogging();
+        services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
 
         var originalBase = AppContext.BaseDirectory;
         var tempDir = Directory.CreateTempSubdirectory();
@@ -108,6 +118,7 @@ public class ServiceRegistrationTests
     {
         var services = new ServiceCollection();
         services.AddLogging();
+        services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
 
         var originalBase = AppContext.BaseDirectory;
         var tempDir = Directory.CreateTempSubdirectory();
