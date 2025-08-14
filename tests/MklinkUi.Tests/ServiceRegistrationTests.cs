@@ -41,11 +41,12 @@ public class ServiceRegistrationTests
     }
 
     [Theory]
-    [InlineData(null, true)]
+    [InlineData(null, false)]
     [InlineData("true", true)]
     [InlineData("1", true)]
     [InlineData("false", false)]
     [InlineData("0", false)]
+    [InlineData("invalid", false)]
     public async Task DefaultDeveloperModeService_Reads_EnvironmentVariable(string? value, bool expected)
     {
         var services = new ServiceCollection();

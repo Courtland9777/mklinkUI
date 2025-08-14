@@ -63,7 +63,7 @@ public static class ServiceRegistration
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to load {AssemblyPath}", assemblyPath);
-            return (new DefaultDeveloperModeService(), new DefaultSymlinkService());
+            return (new DefaultDeveloperModeService(logger), new DefaultSymlinkService());
         }
 
         static T? Create<T>(Assembly assembly) where T : class
@@ -76,6 +76,10 @@ public static class ServiceRegistration
 
     private sealed class DefaultDeveloperModeService : IDeveloperModeService
     {
+        private readonly ILogger _logger;
+
+        public DefaultDeveloperModeService(ILogger logger) => _logger = logger;
+
         public Task<bool> IsEnabledAsync(CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -89,9 +93,16 @@ public static class ServiceRegistration
 
                 if (int.TryParse(value, out var parsedInt))
                     return Task.FromResult(parsedInt != 0);
+
+                _logger.LogWarning("MKLINKUI_DEVELOPER_MODE value '{Value}' is invalid. Defaulting to disabled.", value);
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "MKLINKUI_DEVELOPER_MODE environment variable is not set. Developer mode status cannot be determined.");
             }
 
-            return Task.FromResult(!OperatingSystem.IsWindows());
+            return Task.FromResult(false);
         }
     }
 
