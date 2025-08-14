@@ -8,11 +8,28 @@ namespace MklinkUi.Windows;
 /// <summary>
 /// Windows implementation of <see cref="IDeveloperModeService"/>.
 /// </summary>
-public sealed class DeveloperModeService(ILogger<DeveloperModeService>? logger = null) : IDeveloperModeService
+public sealed class DeveloperModeService : IDeveloperModeService
 {
-    private readonly ILogger<DeveloperModeService> _logger =
-        logger ?? NullLogger<DeveloperModeService>.Instance;
+    private readonly ILogger<DeveloperModeService> _logger;
     private bool? _cached;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DeveloperModeService"/> class
+    /// using a <see cref="NullLogger"/> instance.
+    /// </summary>
+    public DeveloperModeService()
+        : this(null)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DeveloperModeService"/> class.
+    /// </summary>
+    /// <param name="logger">Optional logger instance.</param>
+    public DeveloperModeService(ILogger<DeveloperModeService>? logger)
+    {
+        _logger = logger ?? NullLogger<DeveloperModeService>.Instance;
+    }
 
     public Task<bool> IsEnabledAsync(CancellationToken cancellationToken = default)
     {
