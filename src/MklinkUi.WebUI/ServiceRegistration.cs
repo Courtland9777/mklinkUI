@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using MklinkUi.Core;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace MklinkUi.WebUI;
 
@@ -17,7 +18,7 @@ public static class ServiceRegistration
         {
             var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger("ServiceRegistration");
             var config = sp.GetRequiredService<IConfiguration>();
-            var (dev, sym) = LoadServices(logger, config);
+            var (dev, sym) = LoadServices(sp, logger, config);
             return new ServicesWrapper(dev, sym);
         });
 
@@ -29,20 +30,20 @@ public static class ServiceRegistration
 
         return services;
 
-        static (IDeveloperModeService dev, ISymlinkService sym) LoadServices(ILogger logger, IConfiguration config)
+        static (IDeveloperModeService dev, ISymlinkService sym) LoadServices(IServiceProvider sp, ILogger logger, IConfiguration config)
         {
             var assemblyName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
                 ? "MklinkUi.Windows.dll"
                 : "MklinkUi.Fakes.dll";
             var assemblyPath = Path.Combine(AppContext.BaseDirectory, assemblyName);
-            return TryLoadServices(assemblyPath, logger, config);
+            return TryLoadServices(sp, assemblyPath, logger, config);
         }
     }
 
     private sealed record ServicesWrapper(IDeveloperModeService Dev, ISymlinkService Sym);
 
-    private static (IDeveloperModeService dev, ISymlinkService sym) TryLoadServices(string assemblyPath,
-        ILogger logger, IConfiguration config)
+    private static (IDeveloperModeService dev, ISymlinkService sym) TryLoadServices(IServiceProvider sp,
+        string assemblyPath, ILogger logger, IConfiguration config)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(assemblyPath);
         ArgumentNullException.ThrowIfNull(logger);
@@ -55,8 +56,8 @@ public static class ServiceRegistration
             }
 
             var assembly = Assembly.LoadFrom(assemblyPath);
-            var dev = Create<IDeveloperModeService>(assembly);
-            var sym = Create<ISymlinkService>(assembly);
+            var dev = Create<IDeveloperModeService>(assembly, sp);
+            var sym = Create<ISymlinkService>(assembly, sp);
             if (dev != null && sym != null)
                 return (dev, sym);
 
@@ -68,11 +69,11 @@ public static class ServiceRegistration
             return (new DefaultDeveloperModeService(logger, config), new DefaultSymlinkService());
         }
 
-        static T? Create<T>(Assembly assembly) where T : class
+        static T? Create<T>(Assembly assembly, IServiceProvider sp) where T : class
         {
             var type = assembly.GetTypes()
                 .FirstOrDefault(t => typeof(T).IsAssignableFrom(t) && t is { IsInterface: false, IsAbstract: false });
-            return type is not null ? Activator.CreateInstance(type) as T : null;
+            return type is not null ? ActivatorUtilities.CreateInstance(sp, type) as T : null;
         }
     }
 
