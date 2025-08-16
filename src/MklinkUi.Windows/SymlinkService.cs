@@ -12,8 +12,8 @@ public sealed class SymlinkService : ISymlinkService
     private readonly ILogger<SymlinkService> _logger;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="SymlinkService"/> class
-    /// using a <see cref="NullLogger"/> instance.
+    ///     Initializes a new instance of the <see cref="SymlinkService" /> class
+    ///     using a <see cref="NullLogger" /> instance.
     /// </summary>
     public SymlinkService()
         : this(null)
@@ -21,7 +21,7 @@ public sealed class SymlinkService : ISymlinkService
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="SymlinkService"/> class.
+    ///     Initializes a new instance of the <see cref="SymlinkService" /> class.
     /// </summary>
     /// <param name="logger">Optional logger instance.</param>
     public SymlinkService(ILogger<SymlinkService>? logger)
@@ -94,14 +94,17 @@ public sealed class SymlinkService : ISymlinkService
             }
         }
 
-        return Task.FromResult((IReadOnlyList<SymlinkResult>)results);
+        return Task.FromResult<IReadOnlyList<SymlinkResult>>(results);
     }
 
-    private static string GetMessage(Exception ex) => ex switch
+    private static string GetMessage(Exception ex)
     {
-        UnauthorizedAccessException => "Access denied.",
-        DirectoryNotFoundException or FileNotFoundException => "Path not found.",
-        IOException => "I/O error occurred while creating the link.",
-        _ => "Unexpected error occurred."
-    };
+        return ex switch
+        {
+            UnauthorizedAccessException => "Access denied.",
+            DirectoryNotFoundException or FileNotFoundException => "Path not found.",
+            IOException => "I/O error occurred while creating the link.",
+            _ => "Unexpected error occurred."
+        };
+    }
 }
