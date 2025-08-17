@@ -6,22 +6,24 @@ namespace MklinkUi.Core;
 public interface ISymlinkService
 {
     /// <summary>
-    /// Creates a symbolic link from <paramref name="linkPath"/> to <paramref name="targetPath"/>.
+    /// Creates a file symbolic link inside the specified destination folder.
+    /// The link name matches the source file name.
     /// </summary>
-    /// <param name="linkPath">The path of the link to create.</param>
-    /// <param name="targetPath">The target path the link should point to.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <param name="sourceFile">Absolute path to the source file.</param>
+    /// <param name="destinationFolder">Absolute path to the destination folder where the link will be created.</param>
+    /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>A <see cref="SymlinkResult"/> describing the outcome.</returns>
-    Task<SymlinkResult> CreateSymlinkAsync(string linkPath, string targetPath, CancellationToken cancellationToken = default);
+    Task<SymlinkResult> CreateFileLinkAsync(string sourceFile, string destinationFolder,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Creates symbolic links for the specified <paramref name="sourceFiles"/> inside
-    /// <paramref name="destinationFolder"/>. Each link name matches its source file name.
+    /// Creates directory symbolic links for each source folder inside the destination folder.
+    /// Each link name matches its source folder name.
     /// </summary>
-    /// <param name="sourceFiles">Paths to the source files.</param>
-    /// <param name="destinationFolder">Folder where the links will be created.</param>
+    /// <param name="sourceFolders">Absolute paths to the source folders.</param>
+    /// <param name="destinationFolder">Absolute path to the destination folder.</param>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
-    /// <returns>A list of <see cref="SymlinkResult"/> objects describing each link outcome.</returns>
-    Task<IReadOnlyList<SymlinkResult>> CreateFileSymlinksAsync(IEnumerable<string> sourceFiles,
+    /// <returns>A list of <see cref="SymlinkResult"/> objects describing the outcome of each link.</returns>
+    Task<IReadOnlyList<SymlinkResult>> CreateDirectoryLinksAsync(IEnumerable<string> sourceFolders,
         string destinationFolder, CancellationToken cancellationToken = default);
 }

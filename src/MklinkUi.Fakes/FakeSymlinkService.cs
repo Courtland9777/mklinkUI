@@ -10,33 +10,39 @@ public sealed class FakeSymlinkService : ISymlinkService
     private readonly List<(string LinkPath, string TargetPath)> _created = [];
 
     /// <summary>
-    ///     Gets all link/target pairs passed to <see cref="CreateSymlinkAsync" />.
+    ///     Gets all link/target pairs passed to the service.
     /// </summary>
     public IReadOnlyList<(string LinkPath, string TargetPath)> Created => _created;
 
-    public Task<SymlinkResult> CreateSymlinkAsync(string linkPath, string targetPath,
+    public Task<SymlinkResult> CreateFileLinkAsync(string sourceFile, string destinationFolder,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(linkPath);
-        ArgumentException.ThrowIfNullOrWhiteSpace(targetPath);
-        _created.Add((linkPath, targetPath));
+        ArgumentException.ThrowIfNullOrWhiteSpace(sourceFile);
+        ArgumentException.ThrowIfNullOrWhiteSpace(destinationFolder);
+        if (!Path.IsPathFullyQualified(sourceFile) || !Path.IsPathFullyQualified(destinationFolder))
+            throw new ArgumentException("Paths must be absolute.");
+
+        var link = Path.Combine(destinationFolder, Path.GetFileName(sourceFile));
+        if (_created.Any(c => string.Equals(c.LinkPath, link, StringComparison.OrdinalIgnoreCase)))
+            return Task.FromResult(new SymlinkResult(false, "Link already exists."));
+
+        _created.Add((link, sourceFile));
         return Task.FromResult(new SymlinkResult(true));
     }
 
-    public Task<IReadOnlyList<SymlinkResult>> CreateFileSymlinksAsync(IEnumerable<string> sourceFiles,
+    public Task<IReadOnlyList<SymlinkResult>> CreateDirectoryLinksAsync(IEnumerable<string> sourceFolders,
         string destinationFolder, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(sourceFiles);
+        ArgumentNullException.ThrowIfNull(sourceFolders);
         ArgumentException.ThrowIfNullOrWhiteSpace(destinationFolder);
-
-        cancellationToken.ThrowIfCancellationRequested();
+        if (!Path.IsPathFullyQualified(destinationFolder))
+            throw new ArgumentException("Paths must be absolute.");
 
         var results = new List<SymlinkResult>();
-        foreach (var source in sourceFiles)
+        foreach (var source in sourceFolders)
         {
             cancellationToken.ThrowIfCancellationRequested();
-
-            if (string.IsNullOrWhiteSpace(source))
+            if (string.IsNullOrWhiteSpace(source) || !Path.IsPathFullyQualified(source))
             {
                 results.Add(new SymlinkResult(false, "Invalid source."));
                 continue;

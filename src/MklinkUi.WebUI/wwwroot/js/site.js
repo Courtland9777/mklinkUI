@@ -57,6 +57,36 @@ async function browseFolder(inputId) {
     input.click();
 }
 
+async function browseFolders(textAreaId) {
+    const target = document.getElementById(textAreaId);
+    if (window.showDirectoryPicker) {
+        try {
+            const handle = await window.showDirectoryPicker();
+            let path = handle.name;
+            if ('path' in handle) {
+                path = handle.path;
+            }
+            target.value += (target.value ? "\n" : "") + path;
+        } catch { }
+        return;
+    }
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.webkitdirectory = true;
+    input.multiple = true;
+    input.onchange = e => {
+        const dirs = new Set();
+        Array.from(e.target.files).forEach(f => {
+            const path = f.path || f.webkitRelativePath.split('/')[0];
+            dirs.add(path);
+        });
+        dirs.forEach(d => {
+            target.value += (target.value ? "\n" : "") + d;
+        });
+    };
+    input.click();
+}
+
 function toggleInputs() {
     const isFile = document.getElementById('linkTypeFile').checked;
     document.getElementById('fileInputs').style.display = isFile ? 'block' : 'none';

@@ -115,20 +115,21 @@ public static class ServiceRegistration
 
     private sealed class DefaultSymlinkService : ISymlinkService
     {
-        public Task<SymlinkResult> CreateSymlinkAsync(string linkPath, string targetPath,
+        public Task<SymlinkResult> CreateFileLinkAsync(string sourceFile, string destinationFolder,
             CancellationToken cancellationToken = default)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(linkPath);
-            ArgumentException.ThrowIfNullOrWhiteSpace(targetPath);
+            ArgumentException.ThrowIfNullOrWhiteSpace(sourceFile);
+            ArgumentException.ThrowIfNullOrWhiteSpace(destinationFolder);
             cancellationToken.ThrowIfCancellationRequested();
+
+            if (!Path.IsPathFullyQualified(sourceFile) || !Path.IsPathFullyQualified(destinationFolder))
+                throw new ArgumentException("Paths must be absolute.");
+
+            var link = Path.Combine(destinationFolder, Path.GetFileName(sourceFile));
 
             try
             {
-                if (Directory.Exists(targetPath))
-                    Directory.CreateSymbolicLink(linkPath, targetPath);
-                else
-                    File.CreateSymbolicLink(linkPath, targetPath);
-
+                File.CreateSymbolicLink(link, sourceFile);
                 return Task.FromResult(new SymlinkResult(true));
             }
             catch (Exception ex)
@@ -137,21 +138,22 @@ public static class ServiceRegistration
             }
         }
 
-        public Task<IReadOnlyList<SymlinkResult>> CreateFileSymlinksAsync(IEnumerable<string> sourceFiles,
+        public Task<IReadOnlyList<SymlinkResult>> CreateDirectoryLinksAsync(IEnumerable<string> sourceFolders,
             string destinationFolder, CancellationToken cancellationToken = default)
         {
-            ArgumentNullException.ThrowIfNull(sourceFiles);
+            ArgumentNullException.ThrowIfNull(sourceFolders);
             ArgumentException.ThrowIfNullOrWhiteSpace(destinationFolder);
 
             cancellationToken.ThrowIfCancellationRequested();
 
             var results = new List<SymlinkResult>();
 
-            foreach (var source in sourceFiles)
+            foreach (var source in sourceFolders)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                if (string.IsNullOrWhiteSpace(source))
+                if (string.IsNullOrWhiteSpace(source) || !Path.IsPathFullyQualified(source) ||
+                    !Path.IsPathFullyQualified(destinationFolder))
                 {
                     results.Add(new SymlinkResult(false, "Invalid source."));
                     continue;
@@ -167,7 +169,7 @@ public static class ServiceRegistration
 
                 try
                 {
-                    File.CreateSymbolicLink(link, source);
+                    Directory.CreateSymbolicLink(link, source);
                     results.Add(new SymlinkResult(true));
                 }
                 catch (Exception ex)

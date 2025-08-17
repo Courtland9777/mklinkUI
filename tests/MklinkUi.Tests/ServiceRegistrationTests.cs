@@ -132,11 +132,11 @@ public class ServiceRegistrationTests
             using var cts = new CancellationTokenSource();
             cts.Cancel();
 
-            Func<Task> single = () => sym.CreateSymlinkAsync("a", "b", cts.Token);
-            await single.Should().ThrowAsync<OperationCanceledException>();
+            Func<Task> file = () => sym.CreateFileLinkAsync("a", "dest", cts.Token);
+            await file.Should().ThrowAsync<OperationCanceledException>();
 
-            Func<Task> batch = () => sym.CreateFileSymlinksAsync(["a"], "dest", cts.Token);
-            await batch.Should().ThrowAsync<OperationCanceledException>();
+            Func<Task> dirs = () => sym.CreateDirectoryLinksAsync(["a"], "dest", cts.Token);
+            await dirs.Should().ThrowAsync<OperationCanceledException>();
         }
         finally
         {

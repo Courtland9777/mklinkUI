@@ -11,13 +11,16 @@ public sealed class SymlinkManager(
     ILogger<SymlinkManager> logger)
 {
     /// <summary>
-    ///     Creates a symbolic link if developer mode is enabled.
+    ///     Creates a file symbolic link inside the destination folder if developer mode is enabled.
     /// </summary>
-    public async Task<SymlinkResult> CreateSymlinkAsync(string linkPath, string targetPath,
+    public async Task<SymlinkResult> CreateFileLinkAsync(string sourceFile, string destinationFolder,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(linkPath);
-        ArgumentException.ThrowIfNullOrWhiteSpace(targetPath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(sourceFile);
+        ArgumentException.ThrowIfNullOrWhiteSpace(destinationFolder);
+
+        if (!Path.IsPathFullyQualified(sourceFile) || !Path.IsPathFullyQualified(destinationFolder))
+            return new SymlinkResult(false, "Paths must be absolute.");
 
         if (!await developerModeService.IsEnabledAsync(cancellationToken).ConfigureAwait(false))
         {
@@ -27,26 +30,32 @@ public sealed class SymlinkManager(
 
         try
         {
-            return await symlinkService.CreateSymlinkAsync(linkPath, targetPath, cancellationToken)
+            return await symlinkService.CreateFileLinkAsync(sourceFile, destinationFolder, cancellationToken)
                 .ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to create symlink from {LinkPath} to {TargetPath}", linkPath, targetPath);
-            return new SymlinkResult(false, "Failed to create symlink.");
+            logger.LogError(ex, "Failed to create file link for {SourceFile} in {Destination}", sourceFile,
+                destinationFolder);
+            return new SymlinkResult(false, ex.Message);
         }
     }
 
     /// <summary>
-    ///     Creates multiple file symbolic links within a destination folder if developer mode is enabled.
+    ///     Creates directory symbolic links for each source folder inside the destination folder if developer mode is enabled.
     /// </summary>
-    public async Task<IReadOnlyList<SymlinkResult>> CreateFileSymlinksAsync(IEnumerable<string> sourceFiles,
+    public async Task<IReadOnlyList<SymlinkResult>> CreateDirectoryLinksAsync(IEnumerable<string> sourceFolders,
         string destinationFolder, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(sourceFiles);
+        ArgumentNullException.ThrowIfNull(sourceFolders);
         ArgumentException.ThrowIfNullOrWhiteSpace(destinationFolder);
 
-        var sources = sourceFiles.ToList();
+        var sources = sourceFolders.ToList();
+
+        if (sources.Any(s => string.IsNullOrWhiteSpace(s) || !Path.IsPathFullyQualified(s)) ||
+            !Path.IsPathFullyQualified(destinationFolder))
+            return [.. sources.Select(_ => new SymlinkResult(false, "Paths must be absolute."))];
+
         if (!await developerModeService.IsEnabledAsync(cancellationToken).ConfigureAwait(false))
         {
             logger.LogWarning("Developer mode not enabled.");
@@ -65,13 +74,13 @@ public sealed class SymlinkManager(
             var first = group.First();
             unique.Add((first.Source, first.Index));
             foreach (var item in group.Skip(1))
-                results[item.Index] = new SymlinkResult(false, $"Duplicate file name: {group.Key}");
+                results[item.Index] = new SymlinkResult(false, $"Duplicate folder name: {group.Key}");
         }
 
         try
         {
             var serviceResults = await symlinkService
-                .CreateFileSymlinksAsync(unique.Select(u => u.Source), destinationFolder, cancellationToken)
+                .CreateDirectoryLinksAsync(unique.Select(u => u.Source), destinationFolder, cancellationToken)
                 .ConfigureAwait(false);
 
             if (serviceResults.Count != unique.Count)
@@ -91,7 +100,7 @@ public sealed class SymlinkManager(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to create file symlinks in {DestinationFolder}", destinationFolder);
+            logger.LogError(ex, "Failed to create directory links in {DestinationFolder}", destinationFolder);
             var error = ex.Message;
             foreach (var (_, index) in unique)
                 results[index] = new SymlinkResult(false, error);

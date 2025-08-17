@@ -14,17 +14,14 @@ public sealed class IndexModel(
     private static readonly char[] NewLineSeparators = ['\r', '\n'];
     [BindProperty] public string LinkType { get; set; } = "File";
 
-    /// <summary>
-    ///     Full paths for files to link, provided as newline-separated values.
-    /// </summary>
     [BindProperty]
-    public string SourceFilePaths { get; set; } = string.Empty;
+    public string SourceFile { get; set; } = string.Empty;
 
-    [BindProperty] public string DestinationFolder { get; set; } = string.Empty;
+    [BindProperty]
+    public string SourceFolders { get; set; } = string.Empty;
 
-    [BindProperty] public string SourcePath { get; set; } = string.Empty;
-
-    [BindProperty] public string DestinationPath { get; set; } = string.Empty;
+    [BindProperty]
+    public string DestinationFolder { get; set; } = string.Empty;
 
     public bool DeveloperModeEnabled { get; private set; }
 
@@ -39,88 +36,89 @@ public sealed class IndexModel(
     {
         DeveloperModeEnabled = await developerModeService.IsEnabledAsync();
 
-        if (LinkType == "Folder")
+        if (LinkType == "File")
         {
-            if (string.IsNullOrWhiteSpace(SourcePath) || string.IsNullOrWhiteSpace(DestinationPath))
+            if (string.IsNullOrWhiteSpace(SourceFile) || string.IsNullOrWhiteSpace(DestinationFolder))
             {
-                Results.Add(new SymlinkResultView(SourcePath, DestinationPath, false,
-                    "Source and destination paths are required."));
+                Results.Add(new SymlinkResultView(SourceFile, DestinationFolder, false,
+                    "Select a source file and a destination folder."));
+                return Page();
+            }
+
+            if (!Path.IsPathFullyQualified(SourceFile) || !Path.IsPathFullyQualified(DestinationFolder))
+            {
+                Results.Add(new SymlinkResultView(SourceFile, DestinationFolder, false,
+                    "Paths must be absolute."));
+                return Page();
+            }
+
+            if (!System.IO.File.Exists(SourceFile))
+            {
+                Results.Add(new SymlinkResultView(SourceFile, DestinationFolder, false,
+                    $"Source file not found: {SourceFile}."));
                 return Page();
             }
 
             try
             {
-                var result = await manager.CreateSymlinkAsync(DestinationPath, SourcePath);
-                Results.Add(new SymlinkResultView(SourcePath, DestinationPath, result.Success,
+                var result = await manager.CreateFileLinkAsync(SourceFile, DestinationFolder);
+                var link = Path.Combine(DestinationFolder, Path.GetFileName(SourceFile));
+                Results.Add(new SymlinkResultView(SourceFile, link, result.Success,
                     result.Success ? "OK" : result.ErrorMessage));
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error creating symlink from {Source} to {Destination}", SourcePath,
-                    DestinationPath);
-                Results.Add(new SymlinkResultView(SourcePath, DestinationPath, false,
+                logger.LogError(ex, "Error creating file link for {Source}", SourceFile);
+                Results.Add(new SymlinkResultView(SourceFile, DestinationFolder, false,
                     "An unexpected error occurred while creating the symlink."));
             }
 
             return Page();
         }
 
-        var sourceFiles = SourceFilePaths
+        var folders = SourceFolders
             .Split(NewLineSeparators, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .ToList();
 
-        if (sourceFiles.Count == 0 || string.IsNullOrWhiteSpace(DestinationFolder))
+        if (folders.Count == 0 || string.IsNullOrWhiteSpace(DestinationFolder))
         {
             Results.Add(new SymlinkResultView(string.Empty, DestinationFolder, false,
-                "Select at least one source file and a destination folder."));
+                "Select at least one source folder and a destination folder."));
             return Page();
         }
 
-        foreach (var path in sourceFiles)
+        if (folders.Any(f => !Path.IsPathFullyQualified(f)) || !Path.IsPathFullyQualified(DestinationFolder))
         {
-            var name = Path.GetFileName(path);
-            if (string.IsNullOrWhiteSpace(name) || name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
-            {
-                Results.Add(new SymlinkResultView(path,
-                    Path.Combine(DestinationFolder, name ?? string.Empty), false,
-                    "One or more file names are invalid."));
-                return Page();
-            }
-
-            if (!System.IO.File.Exists(path))
-            {
-                Results.Add(new SymlinkResultView(path,
-                    Path.Combine(DestinationFolder, name), false,
-                    $"Source file not found: {path}."));
-                return Page();
-            }
+            Results.Add(new SymlinkResultView(string.Empty, DestinationFolder, false,
+                "Paths must be absolute."));
+            return Page();
         }
 
         IReadOnlyList<SymlinkResult> results;
         try
         {
-            results = await manager.CreateFileSymlinksAsync(sourceFiles, DestinationFolder);
+            results = await manager.CreateDirectoryLinksAsync(folders, DestinationFolder);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error creating file symlinks in {DestinationFolder}", DestinationFolder);
+            logger.LogError(ex, "Error creating directory links in {DestinationFolder}", DestinationFolder);
             Results.Add(new SymlinkResultView(string.Empty, DestinationFolder, false,
-                "An unexpected error occurred while creating file symlinks."));
+                "An unexpected error occurred while creating the symlinks."));
             return Page();
         }
 
-        if (results.Count != sourceFiles.Count)
+        if (results.Count != folders.Count)
         {
-            logger.LogError("Symlink result count {ResultCount} does not match source file count {SourceCount}",
-                results.Count, sourceFiles.Count);
+            logger.LogError("Symlink result count {ResultCount} does not match source count {SourceCount}",
+                results.Count, folders.Count);
             Results.Add(new SymlinkResultView(string.Empty, DestinationFolder, false,
-                "An unexpected error occurred while creating file symlinks."));
+                "An unexpected error occurred while creating the symlinks."));
             return Page();
         }
 
-        for (var i = 0; i < sourceFiles.Count; i++)
+        for (var i = 0; i < folders.Count; i++)
         {
-            var source = sourceFiles[i];
+            var source = folders[i];
             var link = Path.Combine(DestinationFolder, Path.GetFileName(source));
             var r = results[i];
             Results.Add(new SymlinkResultView(source, link, r.Success,
