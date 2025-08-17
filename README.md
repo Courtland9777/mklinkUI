@@ -75,7 +75,12 @@ The published files are in `src/MklinkUi.WebUI/bin/Release/net8.0/publish`.
 
 ## Web interface
 
-The dark-themed web interface centers its main card on screen for common desktop resolutions. When creating file links you can paste or list multiple source files and select a destination folder. Each file is linked into the folder using its original file name.
+The dark-themed web interface centers its main card on screen for common desktop resolutions. Two link modes are available:
+
+- **File → File** – select a single source file and a destination folder. A link with the same file name is created inside the destination folder.
+- **Folder → Folder** – select one or more source folders and a destination folder. Each selected folder is linked into the destination folder using its original name.
+
+All paths must be provided as absolute paths; relative paths are rejected by the UI and services.
 
 ## Ports
 

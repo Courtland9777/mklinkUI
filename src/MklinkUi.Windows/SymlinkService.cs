@@ -5,77 +5,66 @@ using MklinkUi.Core;
 namespace MklinkUi.Windows;
 
 /// <summary>
-///     Windows implementation of <see cref="ISymlinkService" />.
+///     Windows implementation of <see cref="ISymlinkService"/>.
 /// </summary>
 public sealed class SymlinkService : ISymlinkService
 {
     private readonly ILogger<SymlinkService> _logger;
 
-    /// <summary>
-    ///     Initializes a new instance of the <see cref="SymlinkService" /> class
-    ///     using a <see cref="NullLogger" /> instance.
-    /// </summary>
-    public SymlinkService()
-        : this(null)
+    public SymlinkService() : this(null)
     {
     }
 
-    /// <summary>
-    ///     Initializes a new instance of the <see cref="SymlinkService" /> class.
-    /// </summary>
-    /// <param name="logger">Optional logger instance.</param>
     public SymlinkService(ILogger<SymlinkService>? logger)
     {
         _logger = logger ?? NullLogger<SymlinkService>.Instance;
     }
 
-    public Task<SymlinkResult> CreateSymlinkAsync(string linkPath, string targetPath,
+    public Task<SymlinkResult> CreateFileLinkAsync(string sourceFile, string destinationFolder,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(linkPath);
-        ArgumentException.ThrowIfNullOrWhiteSpace(targetPath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(sourceFile);
+        ArgumentException.ThrowIfNullOrWhiteSpace(destinationFolder);
+        if (!Path.IsPathFullyQualified(sourceFile) || !Path.IsPathFullyQualified(destinationFolder))
+            throw new ArgumentException("Paths must be absolute.");
 
         cancellationToken.ThrowIfCancellationRequested();
 
-        if (File.Exists(linkPath) || Directory.Exists(linkPath))
+        var link = Path.Combine(destinationFolder, Path.GetFileName(sourceFile));
+        if (File.Exists(link) || Directory.Exists(link))
             return Task.FromResult(new SymlinkResult(false, "Link already exists."));
 
         try
         {
-            if (Directory.Exists(targetPath))
-                Directory.CreateSymbolicLink(linkPath, targetPath);
-            else
-                File.CreateSymbolicLink(linkPath, targetPath);
-
+            File.CreateSymbolicLink(link, sourceFile);
             return Task.FromResult(new SymlinkResult(true));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to create symlink from {Link} to {Target}", linkPath, targetPath);
+            _logger.LogError(ex, "Failed to create file link for {Source} in {Destination}", sourceFile, destinationFolder);
             return Task.FromResult(new SymlinkResult(false, GetMessage(ex)));
         }
     }
 
-    public Task<IReadOnlyList<SymlinkResult>> CreateFileSymlinksAsync(IEnumerable<string> sourceFiles,
+    public Task<IReadOnlyList<SymlinkResult>> CreateDirectoryLinksAsync(IEnumerable<string> sourceFolders,
         string destinationFolder, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(sourceFiles);
+        ArgumentNullException.ThrowIfNull(sourceFolders);
         ArgumentException.ThrowIfNullOrWhiteSpace(destinationFolder);
+        if (!Path.IsPathFullyQualified(destinationFolder))
+            throw new ArgumentException("Paths must be absolute.");
 
         var results = new List<SymlinkResult>();
-
-        foreach (var source in sourceFiles)
+        foreach (var source in sourceFolders)
         {
             cancellationToken.ThrowIfCancellationRequested();
-
-            if (string.IsNullOrWhiteSpace(source))
+            if (string.IsNullOrWhiteSpace(source) || !Path.IsPathFullyQualified(source))
             {
                 results.Add(new SymlinkResult(false, "Invalid source."));
                 continue;
             }
 
             var link = Path.Combine(destinationFolder, Path.GetFileName(source));
-
             if (File.Exists(link) || Directory.Exists(link))
             {
                 results.Add(new SymlinkResult(false, "Link already exists."));
@@ -84,12 +73,12 @@ public sealed class SymlinkService : ISymlinkService
 
             try
             {
-                File.CreateSymbolicLink(link, source);
+                Directory.CreateSymbolicLink(link, source);
                 results.Add(new SymlinkResult(true));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to create file symlink from {Source} to {Link}", source, link);
+                _logger.LogError(ex, "Failed to create directory link from {Source} to {Link}", source, link);
                 results.Add(new SymlinkResult(false, GetMessage(ex)));
             }
         }
@@ -97,14 +86,11 @@ public sealed class SymlinkService : ISymlinkService
         return Task.FromResult<IReadOnlyList<SymlinkResult>>(results);
     }
 
-    private static string GetMessage(Exception ex)
+    private static string GetMessage(Exception ex) => ex switch
     {
-        return ex switch
-        {
-            UnauthorizedAccessException => "Access denied.",
-            DirectoryNotFoundException or FileNotFoundException => "Path not found.",
-            IOException => "I/O error occurred while creating the link.",
-            _ => "Unexpected error occurred."
-        };
-    }
+        UnauthorizedAccessException => "Access denied.",
+        DirectoryNotFoundException or FileNotFoundException => "Path not found.",
+        IOException => "I/O error occurred while creating the link.",
+        _ => "Unexpected error occurred."
+    };
 }
