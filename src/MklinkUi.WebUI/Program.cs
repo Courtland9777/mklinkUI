@@ -1,6 +1,9 @@
 using MklinkUi.Core;
 using MklinkUi.WebUI;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.Extensions.Options;
+using Serilog;
+using Serilog.Context;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
@@ -22,7 +25,28 @@ builder.Configuration
     .AddEnvironmentVariables()
     .AddEnvironmentVariables("MKLINKUI__");
 
-builder.Logging.AddConsole();
+var logDir = builder.Configuration.GetValue<string>("Paths:LogDirectory");
+if (string.IsNullOrWhiteSpace(logDir))
+{
+    logDir = OperatingSystem.IsWindows()
+        ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MklinkUi", "logs")
+        : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) ?? "/", ".mklinkui", "logs");
+}
+Directory.CreateDirectory(logDir);
+builder.Configuration["Paths:LogDirectory"] = logDir;
+
+builder.Host.UseSerilog((ctx, services, cfg) =>
+{
+    cfg.ReadFrom.Configuration(ctx.Configuration)
+       .Enrich.FromLogContext()
+       .Enrich.WithMachineName()
+       .Enrich.WithProcessId()
+       .Enrich.WithThreadId()
+       .Enrich.WithProperty("ApplicationVersion", typeof(Program).Assembly.GetName().Version)
+       .Enrich.WithProperty("Environment", envName)
+       .WriteTo.File(Path.Combine(logDir, "log-.txt"), rollingInterval: RollingInterval.Day)
+       .WriteTo.Console();
+});
 
 builder.Services.AddRazorPages();
 builder.Services.AddPlatformServices();
@@ -76,9 +100,35 @@ if (!OperatingSystem.IsWindows() && !app.Environment.IsDevelopment())
 
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error");
     app.UseHsts();
 }
+
+app.UseExceptionHandler(errorApp =>
+{
+    errorApp.Run(async context =>
+    {
+        var feature = context.Features.Get<IExceptionHandlerFeature>();
+        var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+        logger.LogError(feature?.Error, "Unhandled exception");
+        var correlationId = context.Response.Headers["X-Correlation-ID"].FirstOrDefault();
+        var detail = new ErrorDetail(ErrorCodes.Unexpected, "An unexpected error occurred.", null, correlationId);
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsJsonAsync(detail);
+    });
+});
+
+app.Use(async (context, next) =>
+{
+    var correlationId = context.Request.Headers["X-Correlation-ID"].FirstOrDefault();
+    if (string.IsNullOrWhiteSpace(correlationId))
+        correlationId = Guid.NewGuid().ToString();
+    context.Response.Headers["X-Correlation-ID"] = correlationId;
+    using (LogContext.PushProperty("CorrelationId", correlationId))
+    {
+        await next();
+    }
+});
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();

@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Collections.Generic;
 
 namespace MklinkUi.Core;
 
@@ -24,12 +25,17 @@ public sealed class SymlinkManager(
         ArgumentException.ThrowIfNullOrWhiteSpace(destinationFolder);
 
         if (!Path.IsPathFullyQualified(sourceFile) || !Path.IsPathFullyQualified(destinationFolder))
-            return new SymlinkResult(false, "Paths must be absolute.");
+        {
+            using var scope = logger.BeginScope(new Dictionary<string, object> { ["ErrorCode"] = ErrorCodes.InvalidPath });
+            logger.LogWarning("Paths must be absolute. Source: {SourceFile}, Destination: {DestinationFolder}", sourceFile, destinationFolder);
+            return new SymlinkResult(false, "Paths must be absolute.", ErrorCodes.InvalidPath);
+        }
 
         if (!environment.IsDevelopment())
         {
+            using var scope = logger.BeginScope(new Dictionary<string, object> { ["ErrorCode"] = ErrorCodes.DevModeRequired });
             logger.LogWarning("Developer mode not enabled.");
-            return new SymlinkResult(false, "Developer mode not enabled.");
+            return new SymlinkResult(false, "Developer mode not enabled.", ErrorCodes.DevModeRequired);
         }
 
         try
@@ -39,9 +45,9 @@ public sealed class SymlinkManager(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to create file link for {SourceFile} in {Destination}", sourceFile,
-                destinationFolder);
-            return new SymlinkResult(false, ex.Message);
+            using var scope = logger.BeginScope(new Dictionary<string, object> { ["ErrorCode"] = ErrorCodes.Unexpected });
+            logger.LogError(ex, "Failed to create file link for {SourceFile} in {Destination}", sourceFile, destinationFolder);
+            return new SymlinkResult(false, ex.Message, ErrorCodes.Unexpected);
         }
     }
 
@@ -58,12 +64,17 @@ public sealed class SymlinkManager(
 
         if (sources.Any(s => string.IsNullOrWhiteSpace(s) || !Path.IsPathFullyQualified(s)) ||
             !Path.IsPathFullyQualified(destinationFolder))
-            return [.. sources.Select(_ => new SymlinkResult(false, "Paths must be absolute."))];
+        {
+            using var scope = logger.BeginScope(new Dictionary<string, object> { ["ErrorCode"] = ErrorCodes.InvalidPath });
+            logger.LogWarning("Paths must be absolute. Destination: {DestinationFolder}", destinationFolder);
+            return [.. sources.Select(_ => new SymlinkResult(false, "Paths must be absolute.", ErrorCodes.InvalidPath))];
+        }
 
         if (!environment.IsDevelopment())
         {
+            using var scope = logger.BeginScope(new Dictionary<string, object> { ["ErrorCode"] = ErrorCodes.DevModeRequired });
             logger.LogWarning("Developer mode not enabled.");
-            return [.. sources.Select(_ => new SymlinkResult(false, "Developer mode not enabled."))];
+            return [.. sources.Select(_ => new SymlinkResult(false, "Developer mode not enabled.", ErrorCodes.DevModeRequired))];
         }
 
         if (sources.Count > _options.BatchMax)
@@ -109,10 +120,11 @@ public sealed class SymlinkManager(
         }
         catch (Exception ex)
         {
+            using var scope = logger.BeginScope(new Dictionary<string, object> { ["ErrorCode"] = ErrorCodes.Unexpected });
             logger.LogError(ex, "Failed to create directory links in {DestinationFolder}", destinationFolder);
             var error = ex.Message;
             foreach (var (_, index) in unique)
-                results[index] = new SymlinkResult(false, error);
+                results[index] = new SymlinkResult(false, error, ErrorCodes.Unexpected);
             return results;
         }
     }
