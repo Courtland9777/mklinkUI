@@ -47,7 +47,7 @@ public sealed class IndexModel(
                 return Page();
             }
 
-            if (!Path.IsPathFullyQualified(SourceFile) || !Path.IsPathFullyQualified(DestinationFolder))
+            if (!PathHelpers.AreFullyQualified(SourceFile, DestinationFolder))
             {
                 Results.Add(new SymlinkResultView(SourceFile, DestinationFolder, false,
                     "Paths must be absolute."));
@@ -89,7 +89,7 @@ public sealed class IndexModel(
             return Page();
         }
 
-        if (folders.Any(f => !Path.IsPathFullyQualified(f)) || !Path.IsPathFullyQualified(DestinationFolder))
+        if (folders.Any(f => !PathHelpers.IsFullyQualified(f)) || !PathHelpers.IsFullyQualified(DestinationFolder))
         {
             Results.Add(new SymlinkResultView(string.Empty, DestinationFolder, false,
                 "Paths must be absolute."));

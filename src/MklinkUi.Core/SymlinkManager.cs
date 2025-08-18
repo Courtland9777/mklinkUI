@@ -24,7 +24,7 @@ public sealed class SymlinkManager(
         ArgumentException.ThrowIfNullOrWhiteSpace(sourceFile);
         ArgumentException.ThrowIfNullOrWhiteSpace(destinationFolder);
 
-        if (!Path.IsPathFullyQualified(sourceFile) || !Path.IsPathFullyQualified(destinationFolder))
+        if (!PathHelpers.AreFullyQualified(sourceFile, destinationFolder))
         {
             using var scope = logger.BeginScope(new Dictionary<string, object> { ["ErrorCode"] = ErrorCodes.InvalidPath });
             logger.LogWarning("Paths must be absolute. Source: {SourceFile}, Destination: {DestinationFolder}", sourceFile, destinationFolder);
@@ -62,8 +62,8 @@ public sealed class SymlinkManager(
 
         var sources = sourceFolders.ToList();
 
-        if (sources.Any(s => string.IsNullOrWhiteSpace(s) || !Path.IsPathFullyQualified(s)) ||
-            !Path.IsPathFullyQualified(destinationFolder))
+        if (sources.Any(s => !PathHelpers.IsFullyQualified(s)) ||
+            !PathHelpers.IsFullyQualified(destinationFolder))
         {
             using var scope = logger.BeginScope(new Dictionary<string, object> { ["ErrorCode"] = ErrorCodes.InvalidPath });
             logger.LogWarning("Paths must be absolute. Destination: {DestinationFolder}", destinationFolder);
