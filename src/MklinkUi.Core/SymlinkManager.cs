@@ -100,7 +100,7 @@ public sealed class SymlinkManager(
         try
         {
             var serviceResults = await symlinkService
-                .CreateDirectoryLinksAsync(unique.Select(u => u.Source), destinationFolder, cancellationToken)
+                .CreateDirectoryLinksAsync(unique.Select(u => u.Source).ToList(), destinationFolder, cancellationToken)
                 .ConfigureAwait(false);
 
             if (serviceResults.Count != unique.Count)

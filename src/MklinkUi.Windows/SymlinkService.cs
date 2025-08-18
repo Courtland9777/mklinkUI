@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using MklinkUi.Core;
+using System.Linq;
 
 namespace MklinkUi.Windows;
 
@@ -10,13 +11,11 @@ namespace MklinkUi.Windows;
 public sealed class SymlinkService : ISymlinkService
 {
     private readonly ILogger<SymlinkService> _logger;
+    private readonly IDeveloperModeService _developerMode;
 
-    public SymlinkService() : this(null)
+    public SymlinkService(IDeveloperModeService? developerModeService = null, ILogger<SymlinkService>? logger = null)
     {
-    }
-
-    public SymlinkService(ILogger<SymlinkService>? logger)
-    {
+        _developerMode = developerModeService ?? new StubDeveloperModeService();
         _logger = logger ?? NullLogger<SymlinkService>.Instance;
     }
 
@@ -24,14 +23,14 @@ public sealed class SymlinkService : ISymlinkService
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        await Task.Yield(); // keep method truly async; allows cooperative cancellation
+        await Task.Yield();
         cancellationToken.ThrowIfCancellationRequested();
 
-        if (string.IsNullOrWhiteSpace(sourceFile) || string.IsNullOrWhiteSpace(destinationFolder))
-            throw new ArgumentException("Source and destination are required.");
+        sourceFile = PathValidation.EnsureAbsolute(sourceFile);
+        destinationFolder = PathValidation.EnsureAbsolute(destinationFolder);
 
-        if (!Path.IsPathFullyQualified(sourceFile) || !Path.IsPathFullyQualified(destinationFolder))
-            throw new ArgumentException("Paths must be absolute.");
+        if (!_developerMode.IsEnabled)
+            return new SymlinkResult(false, "Developer mode not enabled.", ErrorCodes.DevModeRequired);
 
         if (!File.Exists(sourceFile))
         {
@@ -49,7 +48,7 @@ public sealed class SymlinkService : ISymlinkService
         if (File.Exists(link) || Directory.Exists(link))
         {
             _logger.LogInformation("Link already exists, skipping: {Link}", link);
-            return new SymlinkResult(false, "Link already exists.");
+            return new SymlinkResult(false, "Link already exists.", ErrorCodes.AlreadyExists);
         }
 
         cancellationToken.ThrowIfCancellationRequested();
@@ -67,39 +66,49 @@ public sealed class SymlinkService : ISymlinkService
         }
     }
 
-    public Task<IReadOnlyList<SymlinkResult>> CreateDirectoryLinksAsync(IEnumerable<string> sourceFolders,
+    public Task<IReadOnlyList<SymlinkResult>> CreateDirectoryLinksAsync(IReadOnlyList<string> sourceFolders,
         string destinationFolder, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(sourceFolders);
-        ArgumentException.ThrowIfNullOrWhiteSpace(destinationFolder);
-        if (!PathHelpers.IsFullyQualified(destinationFolder))
-            throw new ArgumentException("Paths must be absolute.");
+        cancellationToken.ThrowIfCancellationRequested();
+        destinationFolder = PathValidation.EnsureAbsolute(destinationFolder);
 
-        var results = new List<SymlinkResult>();
+        if (!_developerMode.IsEnabled)
+        {
+            var fails = Enumerable.Repeat(new SymlinkResult(false, "Developer mode not enabled.", ErrorCodes.DevModeRequired), sourceFolders.Count).ToArray();
+            return Task.FromResult<IReadOnlyList<SymlinkResult>>(fails);
+        }
+
+        var results = new List<SymlinkResult>(sourceFolders.Count);
         foreach (var source in sourceFolders)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (!PathHelpers.IsFullyQualified(source))
+            string absSource;
+            try
             {
-                results.Add(new SymlinkResult(false, "Invalid source."));
+                absSource = PathValidation.EnsureAbsolute(source);
+            }
+            catch (ArgumentException)
+            {
+                results.Add(new SymlinkResult(false, "Paths must be absolute.", ErrorCodes.InvalidPath));
                 continue;
             }
 
-            var link = Path.Combine(destinationFolder, Path.GetFileName(source));
+            var link = Path.Combine(destinationFolder, Path.GetFileName(absSource));
             if (File.Exists(link) || Directory.Exists(link))
             {
-                results.Add(new SymlinkResult(false, "Link already exists."));
+                results.Add(new SymlinkResult(false, "Link already exists.", ErrorCodes.AlreadyExists));
                 continue;
             }
 
             try
             {
-                Directory.CreateSymbolicLink(link, source);
+                Directory.CreateSymbolicLink(link, absSource);
                 results.Add(new SymlinkResult(true));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to create directory link from {Source} to {Link}", source, link);
+                _logger.LogError(ex, "Failed to create directory link from {Source} to {Link}", absSource, link);
                 results.Add(new SymlinkResult(false, GetMessage(ex)));
             }
         }
@@ -114,4 +123,9 @@ public sealed class SymlinkService : ISymlinkService
         IOException => "I/O error occurred while creating the link.",
         _ => "Unexpected error occurred."
     };
+
+    private sealed class StubDeveloperModeService : IDeveloperModeService
+    {
+        public bool IsEnabled => true;
+    }
 }

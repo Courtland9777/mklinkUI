@@ -24,6 +24,6 @@ public interface ISymlinkService
     /// <param name="destinationFolder">Absolute path to the destination folder.</param>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>A list of <see cref="SymlinkResult"/> objects describing the outcome of each link.</returns>
-    Task<IReadOnlyList<SymlinkResult>> CreateDirectoryLinksAsync(IEnumerable<string> sourceFolders,
+    Task<IReadOnlyList<SymlinkResult>> CreateDirectoryLinksAsync(IReadOnlyList<string> sourceFolders,
         string destinationFolder, CancellationToken cancellationToken = default);
 }

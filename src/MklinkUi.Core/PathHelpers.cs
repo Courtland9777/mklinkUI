@@ -22,5 +22,5 @@ public static class PathHelpers
     /// Returns <c>true</c> when the given path is non-empty and fully qualified.
     /// </summary>
     public static bool IsFullyQualified(string? path) =>
-        !string.IsNullOrWhiteSpace(path) && Path.IsPathFullyQualified(path);
+        PathValidation.IsAbsolutePath(path);
 }
