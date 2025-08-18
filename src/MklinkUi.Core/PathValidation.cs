@@ -12,20 +12,29 @@ public static class PathValidation
     /// Determines whether the provided path resolves to an absolute path.
     /// </summary>
     public static bool IsAbsolutePath(string? path)
-        => !string.IsNullOrWhiteSpace(path) && Path.IsPathFullyQualified(path);
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            return false;
+        if (Path.IsPathFullyQualified(path))
+            return true;
+        var first = path[0];
+        return first == Path.DirectorySeparatorChar || first == Path.AltDirectorySeparatorChar;
+    }
 
     /// <summary>
     /// Ensures the provided path is absolute and returns the normalized value.
     /// </summary>
     public static string EnsureAbsolute(string path, string paramName)
     {
-        if (string.IsNullOrWhiteSpace(path))
+        if (!IsAbsolutePath(path))
             throw new ArgumentException("Paths must be absolute.", paramName);
-
-        var full = Path.GetFullPath(path);
-        if (!Path.IsPathFullyQualified(full))
+        try
+        {
+            return Path.GetFullPath(path);
+        }
+        catch (Exception)
+        {
             throw new ArgumentException("Paths must be absolute.", paramName);
-
-        return full;
+        }
     }
 }
