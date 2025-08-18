@@ -78,7 +78,7 @@ builder.Services.AddOptions<PathOptions>()
         }
     });
 
-var serverOpts = builder.Configuration.GetSection("Server").Get<ServerOptions>() ?? new();
+var serverOpts = builder.Configuration.GetRequiredSection("Server").Get<ServerOptions>()!;
 var range = ParseRange(serverOpts.PreferredPortRange);
 var httpPort = FindAvailablePort(serverOpts.DefaultHttpPort, range);
 var httpsPort = FindAvailablePort(serverOpts.DefaultHttpsPort, range);

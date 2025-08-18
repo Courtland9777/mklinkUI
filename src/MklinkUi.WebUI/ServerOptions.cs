@@ -5,11 +5,11 @@ namespace MklinkUi.WebUI;
 public sealed class ServerOptions
 {
     [RegularExpression("^\\d+-\\d+$")]
-    public string PreferredPortRange { get; set; } = "5280-5299";
+    public required string PreferredPortRange { get; set; }
 
     [Range(1, 65535)]
-    public int DefaultHttpPort { get; set; } = 5280;
+    public required int DefaultHttpPort { get; set; }
 
     [Range(1, 65535)]
-    public int DefaultHttpsPort { get; set; } = 5281;
+    public required int DefaultHttpsPort { get; set; }
 }

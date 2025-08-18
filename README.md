@@ -4,6 +4,10 @@ MklinkUI is a small web-based utility that creates file or directory symbolic li
 
 The application runs without containerization and does not expose a health check endpoint.
 
+## Prerequisites
+- [.NET 8 SDK](https://dotnet.microsoft.com/)
+- [Visual Studio 2022](https://visualstudio.microsoft.com/) 17.8 or later (for IDE builds)
+
 ## Solution structure
 The solution (`MklinkUi.sln`) is composed of several projects, each with a distinct responsibility:
 
