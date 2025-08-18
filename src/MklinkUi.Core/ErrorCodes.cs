@@ -13,4 +13,6 @@ public static class ErrorCodes
     public const string Unexpected = "E_UNEXPECTED";
     /// <summary>Specified file or directory was not found.</summary>
     public const string PathNotFound = "E_PATH_NOT_FOUND";
+    /// <summary>Link already exists at the destination.</summary>
+    public const string AlreadyExists = "E_ALREADY_EXISTS";
 }

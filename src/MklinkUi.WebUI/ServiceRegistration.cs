@@ -93,7 +93,7 @@ public static class ServiceRegistration
             }
         }
 
-        public Task<IReadOnlyList<SymlinkResult>> CreateDirectoryLinksAsync(IEnumerable<string> sourceFolders,
+        public Task<IReadOnlyList<SymlinkResult>> CreateDirectoryLinksAsync(IReadOnlyList<string> sourceFolders,
             string destinationFolder, CancellationToken cancellationToken = default)
         {
             ArgumentNullException.ThrowIfNull(sourceFolders);
