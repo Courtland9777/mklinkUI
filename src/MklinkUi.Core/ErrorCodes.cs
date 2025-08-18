@@ -11,4 +11,6 @@ public static class ErrorCodes
     public const string DevModeRequired = "E_DEV_MODE_REQUIRED";
     /// <summary>Unexpected error.</summary>
     public const string Unexpected = "E_UNEXPECTED";
+    /// <summary>Specified file or directory was not found.</summary>
+    public const string PathNotFound = "E_PATH_NOT_FOUND";
 }
