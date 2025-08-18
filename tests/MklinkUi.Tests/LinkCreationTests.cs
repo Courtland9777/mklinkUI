@@ -28,7 +28,10 @@ public class LinkCreationTests
         var result = await manager.CreateFileLinkAsync("/src/a.txt", "/dest");
 
         result.Success.Should().BeTrue();
-        service.Created.Should().Contain((Path.Combine("/dest", "a.txt"), "/src/a.txt"));
+        var expected = (
+            Path.GetFullPath(Path.Combine("/dest", "a.txt")),
+            Path.GetFullPath("/src/a.txt"));
+        service.Created.Should().Contain(expected);
     }
 
     [Fact]
@@ -71,8 +74,14 @@ public class LinkCreationTests
 
         results.Should().HaveCount(2);
         results.Should().OnlyContain(r => r.Success);
-        service.Created.Should().Contain((Path.Combine("/dest", "A"), "/src/A"));
-        service.Created.Should().Contain((Path.Combine("/dest", "B"), "/src/B"));
+        var expectedA = (
+            Path.GetFullPath(Path.Combine("/dest", "A")),
+            Path.GetFullPath("/src/A"));
+        var expectedB = (
+            Path.GetFullPath(Path.Combine("/dest", "B")),
+            Path.GetFullPath("/src/B"));
+        service.Created.Should().Contain(expectedA);
+        service.Created.Should().Contain(expectedB);
     }
 
     [Fact]
