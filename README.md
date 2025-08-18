@@ -59,6 +59,20 @@ The default configuration includes:
 
 Developer mode behaviour is now determined by the standard `DOTNET_ENVIRONMENT` / `ASPNETCORE_ENVIRONMENT` variables; the app treats the `Development` environment as developer mode.
 
+## Logging and diagnostics
+
+MklinkUI uses Serilog for structured logging. Logs are written to `%AppData%/MklinkUi/logs` on Windows or `~/.mklinkui/logs` on other systems with daily rolling files. Each log entry is enriched with machine, process and thread identifiers, application version, environment name and a per-request correlation identifier.
+
+The correlation ID flows through requests via the `X-Correlation-ID` header and is included in any error responses. Include this value when reporting bugs.
+
+| Code | Meaning |
+| --- | --- |
+| E_INVALID_PATH | Provided path was not absolute |
+| E_DEV_MODE_REQUIRED | Developer mode or elevation is required |
+| E_UNEXPECTED | Unexpected server error |
+
+Logging levels are controlled by `Serilog:MinimumLevel` in `appsettings.json` and can be overridden in environment-specific files or via environment variables such as `Serilog__MinimumLevel__Default`.
+
 ## Building
 ### Non-Windows development
 Build the fake services and then the web app:

@@ -2,10 +2,16 @@ using FluentAssertions;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MklinkUi.Core;
 using MklinkUi.Fakes;
 using System.IO;
+using System.Collections.Generic;
+using Serilog;
+using Serilog.Events;
+using Serilog.Core;
+using Serilog.Extensions.Logging;
 using Xunit;
 
 namespace MklinkUi.Tests;
@@ -50,6 +56,7 @@ public class LinkCreationTests
 
         result.Success.Should().BeFalse();
         result.ErrorMessage.Should().Be("Paths must be absolute.");
+        result.ErrorCode.Should().Be(ErrorCodes.InvalidPath);
     }
 
     [Fact]
@@ -95,6 +102,7 @@ public class LinkCreationTests
 
         results[0].Success.Should().BeFalse();
         results[0].ErrorMessage.Should().Be("Paths must be absolute.");
+        results[0].ErrorCode.Should().Be(ErrorCodes.InvalidPath);
     }
 
     [Fact]
@@ -108,7 +116,33 @@ public class LinkCreationTests
 
         result.Success.Should().BeFalse();
         result.ErrorMessage.Should().Be("Developer mode not enabled.");
+        result.ErrorCode.Should().Be(ErrorCodes.DevModeRequired);
     }
+
+    [Fact]
+    public async Task CreateFileLinkAsync_logs_error_code_for_relative_path()
+    {
+        var events = new List<LogEvent>();
+        var logger = new LoggerConfiguration().WriteTo.Sink(new CollectingSink(events)).CreateLogger();
+        using var factory = new SerilogLoggerFactory(logger);
+        var service = new FakeSymlinkService();
+        var env = new FakeHostEnvironment();
+        var manager = new SymlinkManager(env, service, Options.Create(new SymlinkOptions()), factory.CreateLogger<SymlinkManager>());
+
+        await manager.CreateFileLinkAsync("file.txt", "/dest");
+
+        events.Should().Contain(e =>
+            e.Level == LogEventLevel.Warning &&
+            e.Properties.ContainsKey("ErrorCode") &&
+            e.Properties["ErrorCode"].ToString().Contains(ErrorCodes.InvalidPath));
+    }
+}
+
+internal sealed class CollectingSink : ILogEventSink
+{
+    private readonly List<LogEvent> _events;
+    public CollectingSink(List<LogEvent> events) => _events = events;
+    public void Emit(LogEvent logEvent) => _events.Add(logEvent);
 }
 
 internal sealed class FakeHostEnvironment : IHostEnvironment
