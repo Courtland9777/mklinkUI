@@ -20,29 +20,50 @@ public sealed class SymlinkService : ISymlinkService
         _logger = logger ?? NullLogger<SymlinkService>.Instance;
     }
 
-    public Task<SymlinkResult> CreateFileLinkAsync(string sourceFile, string destinationFolder,
+    public async Task<SymlinkResult> CreateFileLinkAsync(string sourceFile, string destinationFolder,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(sourceFile);
-        ArgumentException.ThrowIfNullOrWhiteSpace(destinationFolder);
-        if (!PathHelpers.AreFullyQualified(sourceFile, destinationFolder))
+        cancellationToken.ThrowIfCancellationRequested();
+        await Task.Yield(); // keep method truly async; allows cooperative cancellation
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (string.IsNullOrWhiteSpace(sourceFile) || string.IsNullOrWhiteSpace(destinationFolder))
+            throw new ArgumentException("Source and destination are required.");
+
+        if (!Path.IsPathFullyQualified(sourceFile) || !Path.IsPathFullyQualified(destinationFolder))
             throw new ArgumentException("Paths must be absolute.");
 
-        cancellationToken.ThrowIfCancellationRequested();
+        if (!File.Exists(sourceFile))
+        {
+            _logger.LogWarning("Source file not found: {Source}", sourceFile);
+            return new SymlinkResult(false, "Path not found.", ErrorCodes.PathNotFound);
+        }
+
+        if (!Directory.Exists(destinationFolder))
+        {
+            _logger.LogWarning("Destination folder not found: {Destination}", destinationFolder);
+            return new SymlinkResult(false, "Path not found.", ErrorCodes.PathNotFound);
+        }
 
         var link = Path.Combine(destinationFolder, Path.GetFileName(sourceFile));
         if (File.Exists(link) || Directory.Exists(link))
-            return Task.FromResult(new SymlinkResult(false, "Link already exists."));
+        {
+            _logger.LogInformation("Link already exists, skipping: {Link}", link);
+            return new SymlinkResult(false, "Link already exists.");
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
 
         try
         {
             File.CreateSymbolicLink(link, sourceFile);
-            return Task.FromResult(new SymlinkResult(true));
+            _logger.LogInformation("Created file symlink: {Link} -> {Source}", link, sourceFile);
+            return new SymlinkResult(true);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to create file link for {Source} in {Destination}", sourceFile, destinationFolder);
-            return Task.FromResult(new SymlinkResult(false, GetMessage(ex)));
+            return new SymlinkResult(false, GetMessage(ex));
         }
     }
 
