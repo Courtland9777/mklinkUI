@@ -57,34 +57,33 @@ async function browseFolder(inputId) {
     input.click();
 }
 
+function appendFolders(target, files) {
+    const dirs = new Set();
+    Array.from(files).forEach(f => {
+        const path = (f.path || f.webkitRelativePath.split('/')[0]).replaceAll('\\', '/');
+        dirs.add(path);
+    });
+    if (dirs.size === 0) return;
+    const existing = new Set(target.value.split(/\r?\n/).filter(Boolean));
+    dirs.forEach(d => {
+        if (!existing.has(d)) {
+            target.value += (target.value ? "\n" : "") + d;
+        }
+    });
+}
+
 async function browseFolders(textAreaId) {
     const target = document.getElementById(textAreaId);
-    if (window.showDirectoryPicker) {
-        try {
-            const handle = await window.showDirectoryPicker();
-            let path = handle.name;
-            if ('path' in handle) {
-                path = handle.path;
-            }
-            target.value += (target.value ? "\n" : "") + path;
-        } catch { }
-        return;
-    }
     const input = document.createElement('input');
     input.type = 'file';
     input.webkitdirectory = true;
     input.multiple = true;
-    input.onchange = e => {
-        const dirs = new Set();
-        Array.from(e.target.files).forEach(f => {
-            const path = f.path || f.webkitRelativePath.split('/')[0];
-            dirs.add(path);
-        });
-        dirs.forEach(d => {
-            target.value += (target.value ? "\n" : "") + d;
-        });
-    };
+    input.onchange = e => appendFolders(target, e.target.files);
     input.click();
+}
+
+if (typeof module !== 'undefined') {
+    module.exports = { appendFolders };
 }
 
 function toggleInputs() {
@@ -93,22 +92,24 @@ function toggleInputs() {
     document.getElementById('folderGroup').style.display = isFile ? 'none' : 'block';
 }
 
-window.addEventListener('load', () => {
-    document.getElementById('linkTypeFile').addEventListener('change', toggleInputs);
-    document.getElementById('linkTypeFolder').addEventListener('change', toggleInputs);
-    toggleInputs();
+if (typeof window !== 'undefined') {
+    window.addEventListener('load', () => {
+        document.getElementById('linkTypeFile').addEventListener('change', toggleInputs);
+        document.getElementById('linkTypeFolder').addEventListener('change', toggleInputs);
+        toggleInputs();
 
-    const submitButton = document.getElementById('submitButton');
-    const spinner = document.getElementById('submitSpinner');
-    if (submitButton && spinner) {
-        const form = submitButton.closest('form');
-        if (form) {
-            form.addEventListener('submit', () => {
-                submitButton.disabled = true;
-                spinner.classList.remove('d-none');
-            });
+        const submitButton = document.getElementById('submitButton');
+        const spinner = document.getElementById('submitSpinner');
+        if (submitButton && spinner) {
+            const form = submitButton.closest('form');
+            if (form) {
+                form.addEventListener('submit', () => {
+                    submitButton.disabled = true;
+                    spinner.classList.remove('d-none');
+                });
+            }
+            submitButton.disabled = false;
+            spinner.classList.add('d-none');
         }
-        submitButton.disabled = false;
-        spinner.classList.add('d-none');
-    }
-});
+    });
+}

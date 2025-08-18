@@ -82,7 +82,12 @@ public sealed class IndexModel(
             .Split(NewLineSeparators, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .ToList();
 
-        if (folders.Count == 0 || string.IsNullOrWhiteSpace(DestinationFolder))
+        if (folders.Count == 0)
+        {
+            return Page();
+        }
+
+        if (string.IsNullOrWhiteSpace(DestinationFolder))
         {
             Results.Add(new SymlinkResultView(string.Empty, DestinationFolder, false,
                 "Select at least one source folder and a destination folder."));
