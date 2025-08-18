@@ -2,9 +2,9 @@ using System;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using MklinkUi.Core;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace MklinkUi.WebUI;
 
@@ -14,36 +14,21 @@ public static class ServiceRegistration
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        services.AddSingleton<ServicesWrapper>(sp =>
+        services.AddSingleton<ISymlinkService>(sp =>
         {
             var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger("ServiceRegistration");
-            var config = sp.GetRequiredService<IConfiguration>();
-            var (dev, sym) = LoadServices(sp, logger, config);
-            return new ServicesWrapper(dev, sym);
-        });
-
-        services.AddSingleton<IDeveloperModeService>(sp =>
-            sp.GetRequiredService<ServicesWrapper>().Dev);
-
-        services.AddSingleton<ISymlinkService>(sp =>
-            sp.GetRequiredService<ServicesWrapper>().Sym);
-
-        return services;
-
-        static (IDeveloperModeService dev, ISymlinkService sym) LoadServices(IServiceProvider sp, ILogger logger, IConfiguration config)
-        {
             var assemblyName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
                 ? "MklinkUi.Windows.dll"
                 : "MklinkUi.Fakes.dll";
             var assemblyPath = Path.Combine(AppContext.BaseDirectory, assemblyName);
-            return TryLoadServices(sp, assemblyPath, logger, config);
-        }
+            var service = TryLoadService<ISymlinkService>(sp, assemblyPath, logger);
+            return service ?? new DefaultSymlinkService(sp.GetRequiredService<IOptions<SymlinkOptions>>());
+        });
+
+        return services;
     }
 
-    private sealed record ServicesWrapper(IDeveloperModeService Dev, ISymlinkService Sym);
-
-    private static (IDeveloperModeService dev, ISymlinkService sym) TryLoadServices(IServiceProvider sp,
-        string assemblyPath, ILogger logger, IConfiguration config)
+    private static T? TryLoadService<T>(IServiceProvider sp, string assemblyPath, ILogger logger) where T : class
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(assemblyPath);
         ArgumentNullException.ThrowIfNull(logger);
@@ -56,65 +41,30 @@ public static class ServiceRegistration
             }
 
             var assembly = Assembly.LoadFrom(assemblyPath);
-            var dev = Create<IDeveloperModeService>(assembly, sp);
-            var sym = Create<ISymlinkService>(assembly, sp);
-            if (dev != null && sym != null)
-                return (dev, sym);
+            var type = assembly.GetTypes()
+                .FirstOrDefault(t => typeof(T).IsAssignableFrom(t) && t is { IsInterface: false, IsAbstract: false });
+            if (type is not null)
+            {
+                return ActivatorUtilities.CreateInstance(sp, type) as T;
+            }
 
-            throw new InvalidOperationException($"Required services not found in {assemblyPath}.");
+            throw new InvalidOperationException($"Required service not found in {assemblyPath}.");
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to load {AssemblyPath}", assemblyPath);
-            return (new DefaultDeveloperModeService(logger, config), new DefaultSymlinkService());
-        }
-
-        static T? Create<T>(Assembly assembly, IServiceProvider sp) where T : class
-        {
-            var type = assembly.GetTypes()
-                .FirstOrDefault(t => typeof(T).IsAssignableFrom(t) && t is { IsInterface: false, IsAbstract: false });
-            return type is not null ? ActivatorUtilities.CreateInstance(sp, type) as T : null;
-        }
-    }
-
-    private sealed class DefaultDeveloperModeService : IDeveloperModeService
-    {
-        private readonly ILogger _logger;
-        private readonly IConfiguration _config;
-
-        public DefaultDeveloperModeService(ILogger logger, IConfiguration config)
-        {
-            _logger = logger;
-            _config = config;
-        }
-
-        public Task<bool> IsEnabledAsync(CancellationToken cancellationToken = default)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            var value = _config["DeveloperMode"] ?? Environment.GetEnvironmentVariable("MKLINKUI_DEVELOPER_MODE");
-
-            if (!string.IsNullOrWhiteSpace(value))
-            {
-                if (bool.TryParse(value, out var parsedBool))
-                    return Task.FromResult(parsedBool);
-
-                if (int.TryParse(value, out var parsedInt))
-                    return Task.FromResult(parsedInt != 0);
-
-                _logger.LogWarning("Developer mode value '{Value}' is invalid. Defaulting to disabled.", value);
-            }
-            else
-            {
-                _logger.LogWarning("Developer mode value is not set. Developer mode status cannot be determined.");
-            }
-
-            return Task.FromResult(false);
+            return null;
         }
     }
 
     private sealed class DefaultSymlinkService : ISymlinkService
     {
+        private readonly SymlinkOptions _options;
+
+        public DefaultSymlinkService(IOptions<SymlinkOptions> options)
+        {
+            _options = options.Value;
+        }
         public Task<SymlinkResult> CreateFileLinkAsync(string sourceFile, string destinationFolder,
             CancellationToken cancellationToken = default)
         {
@@ -129,8 +79,13 @@ public static class ServiceRegistration
 
             try
             {
-                File.CreateSymbolicLink(link, sourceFile);
+                var targetLink = HandleCollision(link, isDirectory: false);
+                File.CreateSymbolicLink(targetLink, sourceFile);
                 return Task.FromResult(new SymlinkResult(true));
+            }
+            catch (IOException ex) when (ex.Message == "Link already exists.")
+            {
+                return Task.FromResult(new SymlinkResult(false, ex.Message));
             }
             catch (Exception ex)
             {
@@ -161,16 +116,15 @@ public static class ServiceRegistration
 
                 var link = Path.Combine(destinationFolder, Path.GetFileName(source));
 
-                if (File.Exists(link) || Directory.Exists(link))
-                {
-                    results.Add(new SymlinkResult(false, "Link already exists."));
-                    continue;
-                }
-
                 try
                 {
-                    Directory.CreateSymbolicLink(link, source);
+                    var targetLink = HandleCollision(link, isDirectory: true);
+                    Directory.CreateSymbolicLink(targetLink, source);
                     results.Add(new SymlinkResult(true));
+                }
+                catch (IOException ex) when (ex.Message == "Link already exists.")
+                {
+                    results.Add(new SymlinkResult(false, ex.Message));
                 }
                 catch (Exception ex)
                 {
@@ -180,6 +134,34 @@ public static class ServiceRegistration
 
             return Task.FromResult((IReadOnlyList<SymlinkResult>)results);
         }
+
+        private string HandleCollision(string path, bool isDirectory)
+        {
+            if (!File.Exists(path) && !Directory.Exists(path))
+                return path;
+
+            switch (_options.CollisionPolicy)
+            {
+                case CollisionPolicy.Skip:
+                    throw new IOException("Link already exists.");
+                case CollisionPolicy.Overwrite:
+                    if (isDirectory)
+                        Directory.Delete(path, recursive: true);
+                    else
+                        File.Delete(path);
+                    return path;
+                case CollisionPolicy.Rename:
+                    var basePath = path;
+                    var counter = 1;
+                    string candidate;
+                    do
+                    {
+                        candidate = $"{basePath}.{counter++}";
+                    } while (File.Exists(candidate) || Directory.Exists(candidate));
+                    return candidate;
+                default:
+                    return path;
+            }
+        }
     }
 }
-

@@ -1,6 +1,6 @@
 # MklinkUI
 
-MklinkUI is a small web-based utility that reports whether Windows Developer Mode is enabled and creates file or directory symbolic links.
+MklinkUI is a small web-based utility that creates file or directory symbolic links.
 
 The application runs without containerization and does not expose a health check endpoint.
 
@@ -15,9 +15,49 @@ The solution (`MklinkUi.sln`) is composed of several projects, each with a disti
 - `tests/MklinkUi.Windows.Tests` – Windows-only tests for the real symlink service.
 
 ## Platform-specific service registration
-`ServiceRegistration.AddPlatformServices` checks the current OS and loads `MklinkUi.Windows.dll` or `MklinkUi.Fakes.dll` from the application directory using reflection. If neither assembly is found, basic default services are used that rely on the cross-platform `File.CreateSymbolicLink` API and assume Developer Mode is enabled.
+`ServiceRegistration.AddPlatformServices` checks the current OS and loads `MklinkUi.Windows.dll` or `MklinkUi.Fakes.dll` from the application directory using reflection. If neither assembly is found, basic default services are used that rely on the cross-platform `File.CreateSymbolicLink` API.
 
 Outside of the Development environment the application verifies it is running on Windows and exits with a `PlatformNotSupportedException` on other operating systems.
+
+## Configuration
+
+Configuration is provided by `appsettings.json`, optional environment-specific JSON files (e.g. `appsettings.Development.json`), and environment variables. Environment variables with the `MKLINKUI__` prefix override JSON values. Example:
+
+```bash
+MKLINKUI__SERVER__DEFAULTHTTPPORT=5285
+ASPNETCORE_URLS=http://localhost:5280
+```
+
+The default configuration includes:
+
+```json
+{
+  "Kestrel": {
+    "Endpoints": {
+      "Http": { "Url": "http://localhost:5280" },
+      "Https": { "Url": "https://localhost:5281" }
+    }
+  },
+  "Server": {
+    "PreferredPortRange": "5280-5299",
+    "DefaultHttpPort": 5280,
+    "DefaultHttpsPort": 5281
+  },
+  "Symlink": {
+    "CollisionPolicy": "Skip",
+    "BatchMax": 100
+  },
+  "Paths": {
+    "LogDirectory": ""
+  },
+  "UI": {
+    "MaxCardWidth": 800,
+    "EnableDragDrop": true
+  }
+}
+```
+
+Developer mode behaviour is now determined by the standard `DOTNET_ENVIRONMENT` / `ASPNETCORE_ENVIRONMENT` variables; the app treats the `Development` environment as developer mode.
 
 ## Building
 ### Non-Windows development
@@ -69,7 +109,6 @@ The published files are in `src/MklinkUi.WebUI/bin/Release/net8.0/publish`.
 
 ## Limitations and known issues
 - The web UI is minimal and lacks comprehensive error handling.
-- If the `DeveloperMode` configuration value (or `MKLINKUI_DEVELOPER_MODE` environment variable) is unset or invalid, developer mode is reported as disabled and a warning is logged.
 - Creating symbolic links may require elevated privileges or Windows Developer Mode.
 - Browser file pickers cannot expose absolute file paths, so only file names are captured when selecting files.
 
@@ -84,7 +123,7 @@ All paths must be provided as absolute paths; relative paths are rejected by the
 
 ## Ports
 
-By default the app binds to HTTP port **5280** (and HTTPS **5281** when a certificate is configured). Override with the `ASPNETCORE_URLS` environment variable or `Server:Port` in `appsettings.json`.
+By default the app binds to HTTP port **5280** and HTTPS **5281**. These defaults come from the `Server` section of `appsettings.json` and can be overridden via `ASPNETCORE_URLS` or prefixed environment variables such as `MKLINKUI__SERVER__DEFAULTHTTPPORT`.
 
 
 ## Continuous integration

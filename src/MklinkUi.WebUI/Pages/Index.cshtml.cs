@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Hosting;
 using MklinkUi.Core;
 
 namespace MklinkUi.WebUI.Pages;
@@ -8,7 +9,7 @@ public sealed record SymlinkResultView(string Source, string Link, bool Success,
 
 public sealed class IndexModel(
     SymlinkManager manager,
-    IDeveloperModeService developerModeService,
+    IHostEnvironment environment,
     ILogger<IndexModel> logger) : PageModel
 {
     private static readonly char[] NewLineSeparators = ['\r', '\n'];
@@ -27,14 +28,15 @@ public sealed class IndexModel(
 
     public List<SymlinkResultView> Results { get; } = [];
 
-    public async Task OnGetAsync()
+    public Task OnGetAsync()
     {
-        DeveloperModeEnabled = await developerModeService.IsEnabledAsync();
+        DeveloperModeEnabled = environment.IsDevelopment();
+        return Task.CompletedTask;
     }
 
     public async Task<IActionResult> OnPostAsync()
     {
-        DeveloperModeEnabled = await developerModeService.IsEnabledAsync();
+        DeveloperModeEnabled = environment.IsDevelopment();
 
         if (LinkType == "File")
         {
