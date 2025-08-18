@@ -51,7 +51,7 @@ public sealed class FakeSymlinkService : ISymlinkService
 
         _links.Add(linkPath);
         _created.Add((linkPath, sourceFile));
-        return new SymlinkResult(true);
+        return new SymlinkResult(true, LinkPath: linkPath);
     }
 
     public async Task<IReadOnlyList<SymlinkResult>> CreateDirectoryLinksAsync(IReadOnlyList<string> sourceFolders,
@@ -98,7 +98,7 @@ public sealed class FakeSymlinkService : ISymlinkService
 
             _links.Add(linkPath);
             _created.Add((linkPath, absSource));
-            results.Add(new SymlinkResult(true));
+            results.Add(new SymlinkResult(true, LinkPath: linkPath));
         }
 
         return results;

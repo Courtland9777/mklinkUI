@@ -58,7 +58,7 @@ public sealed class SymlinkService : ISymlinkService
         {
             File.CreateSymbolicLink(link, sourceFile);
             _logger.LogInformation("Created file symlink: {Link} -> {Source}", link, sourceFile);
-            return new SymlinkResult(true);
+            return new SymlinkResult(true, LinkPath: link);
         }
         catch (Exception ex)
         {
@@ -110,7 +110,7 @@ public sealed class SymlinkService : ISymlinkService
             try
             {
                 Directory.CreateSymbolicLink(link, absSource);
-                results.Add(new SymlinkResult(true));
+                results.Add(new SymlinkResult(true, LinkPath: link));
             }
             catch (Exception ex)
             {
