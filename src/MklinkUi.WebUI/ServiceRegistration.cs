@@ -80,8 +80,9 @@ public static class ServiceRegistration
             try
             {
                 var targetLink = HandleCollision(link, isDirectory: false);
+                targetLink = Path.GetFullPath(targetLink);
                 File.CreateSymbolicLink(targetLink, sourceFile);
-                return Task.FromResult(new SymlinkResult(true));
+                return Task.FromResult(new SymlinkResult(true, LinkPath: targetLink));
             }
             catch (IOException ex) when (ex.Message == "Link already exists.")
             {
@@ -118,8 +119,9 @@ public static class ServiceRegistration
                 try
                 {
                     var targetLink = HandleCollision(link, isDirectory: true);
+                    targetLink = Path.GetFullPath(targetLink);
                     Directory.CreateSymbolicLink(targetLink, source);
-                    results.Add(new SymlinkResult(true));
+                    results.Add(new SymlinkResult(true, LinkPath: targetLink));
                 }
                 catch (IOException ex) when (ex.Message == "Link already exists.")
                 {

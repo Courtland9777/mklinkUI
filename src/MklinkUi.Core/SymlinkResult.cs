@@ -6,4 +6,5 @@ namespace MklinkUi.Core;
 /// <param name="Success">Whether the operation succeeded.</param>
 /// <param name="ErrorMessage">An optional error message.</param>
 /// <param name="ErrorCode">Optional error code.</param>
-public record SymlinkResult(bool Success, string? ErrorMessage = null, string? ErrorCode = null);
+/// <param name="LinkPath">The created link path when successful.</param>
+public record SymlinkResult(bool Success, string? ErrorMessage = null, string? ErrorCode = null, string? LinkPath = null);
