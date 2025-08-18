@@ -1,4 +1,6 @@
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace MklinkUi.Core;
 
@@ -6,10 +8,12 @@ namespace MklinkUi.Core;
 ///     Coordinates symbolic link creation using provided services.
 /// </summary>
 public sealed class SymlinkManager(
-    IDeveloperModeService developerModeService,
+    IHostEnvironment environment,
     ISymlinkService symlinkService,
+    IOptions<SymlinkOptions> options,
     ILogger<SymlinkManager> logger)
 {
+    private readonly SymlinkOptions _options = options.Value;
     /// <summary>
     ///     Creates a file symbolic link inside the destination folder if developer mode is enabled.
     /// </summary>
@@ -22,7 +26,7 @@ public sealed class SymlinkManager(
         if (!Path.IsPathFullyQualified(sourceFile) || !Path.IsPathFullyQualified(destinationFolder))
             return new SymlinkResult(false, "Paths must be absolute.");
 
-        if (!await developerModeService.IsEnabledAsync(cancellationToken).ConfigureAwait(false))
+        if (!environment.IsDevelopment())
         {
             logger.LogWarning("Developer mode not enabled.");
             return new SymlinkResult(false, "Developer mode not enabled.");
@@ -56,10 +60,15 @@ public sealed class SymlinkManager(
             !Path.IsPathFullyQualified(destinationFolder))
             return [.. sources.Select(_ => new SymlinkResult(false, "Paths must be absolute."))];
 
-        if (!await developerModeService.IsEnabledAsync(cancellationToken).ConfigureAwait(false))
+        if (!environment.IsDevelopment())
         {
             logger.LogWarning("Developer mode not enabled.");
             return [.. sources.Select(_ => new SymlinkResult(false, "Developer mode not enabled."))];
+        }
+
+        if (sources.Count > _options.BatchMax)
+        {
+            return [.. sources.Select(_ => new SymlinkResult(false, $"Too many items. Max {_options.BatchMax}"))];
         }
 
         var groups = sources
