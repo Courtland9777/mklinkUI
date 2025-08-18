@@ -72,7 +72,7 @@ public static class ServiceRegistration
             ArgumentException.ThrowIfNullOrWhiteSpace(destinationFolder);
             cancellationToken.ThrowIfCancellationRequested();
 
-            if (!Path.IsPathFullyQualified(sourceFile) || !Path.IsPathFullyQualified(destinationFolder))
+            if (!PathHelpers.AreFullyQualified(sourceFile, destinationFolder))
                 throw new ArgumentException("Paths must be absolute.");
 
             var link = Path.Combine(destinationFolder, Path.GetFileName(sourceFile));
@@ -107,8 +107,7 @@ public static class ServiceRegistration
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                if (string.IsNullOrWhiteSpace(source) || !Path.IsPathFullyQualified(source) ||
-                    !Path.IsPathFullyQualified(destinationFolder))
+                if (!PathHelpers.AreFullyQualified(source, destinationFolder))
                 {
                     results.Add(new SymlinkResult(false, "Invalid source."));
                     continue;

@@ -25,7 +25,7 @@ public sealed class SymlinkService : ISymlinkService
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sourceFile);
         ArgumentException.ThrowIfNullOrWhiteSpace(destinationFolder);
-        if (!Path.IsPathFullyQualified(sourceFile) || !Path.IsPathFullyQualified(destinationFolder))
+        if (!PathHelpers.AreFullyQualified(sourceFile, destinationFolder))
             throw new ArgumentException("Paths must be absolute.");
 
         cancellationToken.ThrowIfCancellationRequested();
@@ -51,14 +51,14 @@ public sealed class SymlinkService : ISymlinkService
     {
         ArgumentNullException.ThrowIfNull(sourceFolders);
         ArgumentException.ThrowIfNullOrWhiteSpace(destinationFolder);
-        if (!Path.IsPathFullyQualified(destinationFolder))
+        if (!PathHelpers.IsFullyQualified(destinationFolder))
             throw new ArgumentException("Paths must be absolute.");
 
         var results = new List<SymlinkResult>();
         foreach (var source in sourceFolders)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (string.IsNullOrWhiteSpace(source) || !Path.IsPathFullyQualified(source))
+            if (!PathHelpers.IsFullyQualified(source))
             {
                 results.Add(new SymlinkResult(false, "Invalid source."));
                 continue;

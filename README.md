@@ -7,7 +7,7 @@ The application runs without containerization and does not expose a health check
 ## Solution structure
 The solution (`MklinkUi.sln`) is composed of several projects, each with a distinct responsibility:
 
-- `src/MklinkUi.Core` – cross-platform abstractions and the `SymlinkManager` coordinator.
+- `src/MklinkUi.Core` – cross-platform abstractions, shared helpers such as `PathHelpers`, and the `SymlinkManager` coordinator.
 - `src/MklinkUi.Windows` – Windows-only services that read the registry and invoke the Win32 `CreateSymbolicLink` API. The project requires the Windows Desktop SDK and is built only on Windows.
 - `src/MklinkUi.Fakes` – stub implementations used for development and tests on non-Windows hosts.
 - `src/MklinkUi.WebUI` – ASP.NET Core front end that loads either `MklinkUi.Windows.dll` or `MklinkUi.Fakes.dll` at runtime.
