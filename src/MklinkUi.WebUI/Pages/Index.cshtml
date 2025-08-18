@@ -18,9 +18,9 @@
             </span>
         </div>
 
-        <form method="post" asp-antiforgery="true">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="mb-3">
+        <form method="post" asp-antiforgery="true" class="d-flex flex-column gap-3">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+            <div>
                 <label class="form-label" asp-for="LinkType">Symlink Type</label>
                 <div>
                     <div class="form-check form-check-inline">
@@ -35,65 +35,72 @@
                 <span asp-validation-for="LinkType" class="text-danger"></span>
             </div>
 
-            <div class="mb-3" id="fileInputs">
-                <label class="form-label" asp-for="SourceFile">Select a single source file</label>
-                <div class="input-group">
-                    <input class="form-control" id="sourceFile" asp-for="SourceFile" placeholder="C:\\source\\file.txt" />
-                    <button type="button" class="btn btn-outline-secondary" onclick="browseFile('sourceFile', false)"><i class="fa-solid fa-file-import me-1"></i>Browse</button>
+            <div id="fileGroup">
+                <h5 class="mb-3"><i class="fa-solid fa-file me-1"></i>File Link</h5>
+                <div class="mb-3" id="fileInputs">
+                    <label class="form-label" asp-for="SourceFile">Select a single source file</label>
+                    <div class="input-group">
+                        <input class="form-control" id="sourceFile" asp-for="SourceFile" placeholder="C:\\source\\file.txt" />
+                        <button type="button" class="btn btn-outline-secondary" onclick="browseFile('sourceFile', false)"><i class="fa-solid fa-file-import me-1"></i>Browse</button>
+                    </div>
+                    <span asp-validation-for="SourceFile" class="text-danger"></span>
+                    <div class="form-text">Enter the absolute path to the source file.</div>
                 </div>
-                <span asp-validation-for="SourceFile" class="text-danger"></span>
-                <div class="form-text">Enter the absolute path to the source file.</div>
+
+                <div class="mb-3" id="fileDest">
+                    <label class="form-label" asp-for="DestinationFolder">Select destination folder</label>
+                    <div class="input-group">
+                        <input class="form-control" id="destFolderFile" asp-for="DestinationFolder" placeholder="C:\\links" />
+                        <button type="button" class="btn btn-outline-secondary" onclick="browseFolder('destFolderFile')"><i class="fa-solid fa-folder-open me-1"></i>Browse</button>
+                    </div>
+                    <span asp-validation-for="DestinationFolder" class="text-danger"></span>
+                    <small class="form-text text-muted">Full path support depends on your browser. If only the folder name appears, enter the full path manually.</small>
+                </div>
             </div>
 
-            <div class="mb-3" id="fileDest">
-                <label class="form-label" asp-for="DestinationFolder">Select destination folder</label>
-                <div class="input-group">
-                    <input class="form-control" id="destFolderFile" asp-for="DestinationFolder" placeholder="C:\\links" />
-                    <button type="button" class="btn btn-outline-secondary" onclick="browseFolder('destFolderFile')"><i class="fa-solid fa-folder-open me-1"></i>Browse</button>
+            <div id="folderGroup" style="display:none;">
+                <h5 class="mb-3"><i class="fa-solid fa-folder me-1"></i>Folder Link</h5>
+                <div class="mb-3" id="folderSource">
+                    <label class="form-label" asp-for="SourceFolders">Select one or more source folders</label>
+                    <div class="input-group">
+                        <textarea class="form-control" id="sourceFolders" asp-for="SourceFolders" rows="3" placeholder="C:\\source\\folder"></textarea>
+                        <button type="button" class="btn btn-outline-secondary" onclick="browseFolders('sourceFolders')"><i class="fa-solid fa-folder-open me-1"></i>Browse Folders…</button>
+                    </div>
+                    <span asp-validation-for="SourceFolders" class="text-danger"></span>
+                    <div class="form-text">Enter one absolute folder path per line.</div>
                 </div>
-                <span asp-validation-for="DestinationFolder" class="text-danger"></span>
-                <small class="form-text text-muted">Full path support depends on your browser. If only the folder name appears, enter the full path manually.</small>
+
+                <div class="mb-3" id="folderDest">
+                    <label class="form-label" asp-for="DestinationFolder">Select destination folder</label>
+                    <div class="input-group">
+                        <input class="form-control" id="destFolder" asp-for="DestinationFolder" placeholder="C:\\destination" />
+                        <button type="button" class="btn btn-outline-secondary" onclick="browseFolder('destFolder')"><i class="fa-solid fa-folder-open me-1"></i>Browse</button>
+                    </div>
+                    <span asp-validation-for="DestinationFolder" class="text-danger"></span>
+                    <small class="form-text text-muted">Full path support depends on your browser. If only the folder name appears, enter the full path manually.</small>
+                </div>
             </div>
 
-            <div class="mb-3" id="folderSource">
-                <label class="form-label" asp-for="SourceFolders">Select one or more source folders</label>
-                <div class="input-group">
-                    <textarea class="form-control" id="sourceFolders" asp-for="SourceFolders" rows="3" placeholder="C:\\source\\folder"></textarea>
-                    <button type="button" class="btn btn-outline-secondary" onclick="browseFolders('sourceFolders')"><i class="fa-solid fa-folder-open me-1"></i>Browse Folders…</button>
-                </div>
-                <span asp-validation-for="SourceFolders" class="text-danger"></span>
-                <div class="form-text">Enter one absolute folder path per line.</div>
-            </div>
-
-            <div class="mb-3" id="folderDest">
-                <label class="form-label" asp-for="DestinationFolder">Select destination folder</label>
-                <div class="input-group">
-                    <input class="form-control" id="destFolder" asp-for="DestinationFolder" placeholder="C:\\destination" />
-                    <button type="button" class="btn btn-outline-secondary" onclick="browseFolder('destFolder')"><i class="fa-solid fa-folder-open me-1"></i>Browse</button>
-                </div>
-                <span asp-validation-for="DestinationFolder" class="text-danger"></span>
-                <small class="form-text text-muted">Full path support depends on your browser. If only the folder name appears, enter the full path manually.</small>
-            </div>
-
-            <button type="submit" id="submitButton" class="btn btn-primary">
+            <button type="submit" id="submitButton" class="btn btn-primary w-100">
                 <i class="fa-solid fa-play me-1"></i>Create Symlink
                 <span id="submitSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
             </button>
         </form>
+
+        @if (Model.Results.Count > 0)
+        {
+            <div class="mt-4 d-flex flex-column gap-2">
+                @foreach (var r in Model.Results)
+                {
+                    <div class="alert @(r.Success ? "alert-success" : "alert-danger") d-flex align-items-center" role="alert">
+                        <i class="fa-solid @(r.Success ? "fa-check-circle" : "fa-circle-exclamation") me-2"></i>
+                        <div>@r.Source -> @r.Link: @(r.Success ? "OK" : r.ErrorMessage)</div>
+                    </div>
+                }
+            </div>
+        }
     </div>
 </div>
-
-@if (Model.Results.Count > 0)
-{
-    <ul class="list-group mt-3">
-        @foreach (var r in Model.Results)
-        {
-            <li class="list-group-item @(r.Success ? "list-group-item-success" : "list-group-item-danger")">
-                @r.Source -> @r.Link: @(r.Success ? "OK" : r.ErrorMessage)
-            </li>
-        }
-    </ul>
-}
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
