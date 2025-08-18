@@ -99,6 +99,16 @@ Run the unit tests:
 dotnet test
 ```
 
+### Testing & Coverage
+
+Collect coverage reports for both test projects:
+
+```bash
+dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat="lcov,cobertura"
+```
+
+The Windows-specific tests in `MklinkUi.Windows.Tests` are automatically skipped on non-Windows hosts.
+
 ## Publishing
 Publish the app for Windows:
 

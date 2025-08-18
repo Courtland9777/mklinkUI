@@ -1,19 +1,20 @@
-#if WINDOWS
 using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
-using Xunit;
 using MklinkUi.Windows;
+using Xunit;
 
 namespace MklinkUi.Windows.Tests;
 
 public class SymlinkServiceTests
 {
-    [Fact]
-    public async Task CreateFileLinkAsync_creates_file_link()
+    [SkippableFact]
+    public async Task CreateFileLinkAsync_ShouldCreateLink_WhenPathsAreValid()
     {
+        Skip.IfNot(OperatingSystem.IsWindows());
+
         var service = new SymlinkService();
         var temp = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(temp);
@@ -30,21 +31,25 @@ public class SymlinkServiceTests
         File.GetAttributes(link).HasFlag(FileAttributes.Directory).Should().BeFalse();
     }
 
-    [Fact]
-    public async Task CreateFileLinkAsync_throws_when_cancelled()
+    [SkippableFact]
+    public async Task CreateFileLinkAsync_ShouldThrow_WhenCancelled()
     {
+        Skip.IfNot(OperatingSystem.IsWindows());
+
         var service = new SymlinkService();
         using var cts = new CancellationTokenSource();
         await cts.CancelAsync();
 
-        var act = () => service.CreateFileLinkAsync("a", "b", cts.Token);
+        Func<Task> act = () => service.CreateFileLinkAsync("a", "b", cts.Token);
 
         await act.Should().ThrowAsync<OperationCanceledException>();
     }
 
-    [Fact]
-    public async Task CreateDirectoryLinksAsync_creates_directory_link()
+    [SkippableFact]
+    public async Task CreateDirectoryLinksAsync_ShouldCreateLink_WhenValid()
     {
+        Skip.IfNot(OperatingSystem.IsWindows());
+
         var service = new SymlinkService();
         var temp = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(temp);
@@ -60,5 +65,21 @@ public class SymlinkServiceTests
         var link = Path.Combine(dest, "sourceDir");
         Directory.Exists(link).Should().BeTrue();
     }
+
+    [SkippableFact]
+    public async Task CreateFileLinkAsync_ShouldReturnPathNotFound_WhenSourceMissing()
+    {
+        Skip.IfNot(OperatingSystem.IsWindows());
+
+        var service = new SymlinkService();
+        var temp = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(temp);
+        var dest = Path.Combine(temp, "links");
+        Directory.CreateDirectory(dest);
+
+        var result = await service.CreateFileLinkAsync(Path.Combine(temp, "missing.txt"), dest);
+
+        result.Success.Should().BeFalse();
+        result.ErrorMessage.Should().Be("Path not found.");
+    }
 }
-#endif

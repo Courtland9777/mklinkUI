@@ -47,4 +47,38 @@ public class OptionsTests
         Action act = () => { _ = provider.GetRequiredService<IOptions<ServerOptions>>().Value; };
         act.Should().Throw<OptionsValidationException>();
     }
+
+    [Fact]
+    public void SymlinkOptions_ShouldBindValues_WhenValid()
+    {
+        var dict = new Dictionary<string, string?>
+        {
+            ["Symlink:CollisionPolicy"] = "Overwrite",
+            ["Symlink:BatchMax"] = "10"
+        };
+        var config = new ConfigurationBuilder().AddInMemoryCollection(dict).Build();
+        var services = new ServiceCollection();
+        services.AddOptions<SymlinkOptions>().Bind(config.GetSection("Symlink")).ValidateDataAnnotations().ValidateOnStart();
+        using var provider = services.BuildServiceProvider();
+        var options = provider.GetRequiredService<IOptions<SymlinkOptions>>().Value;
+        options.CollisionPolicy.Should().Be(CollisionPolicy.Overwrite);
+        options.BatchMax.Should().Be(10);
+    }
+
+    [Fact]
+    public void UiOptions_ShouldBindValues_WhenValid()
+    {
+        var dict = new Dictionary<string, string?>
+        {
+            ["UI:MaxCardWidth"] = "400",
+            ["UI:EnableDragDrop"] = "false"
+        };
+        var config = new ConfigurationBuilder().AddInMemoryCollection(dict).Build();
+        var services = new ServiceCollection();
+        services.AddOptions<UiOptions>().Bind(config.GetSection("UI")).ValidateDataAnnotations().ValidateOnStart();
+        using var provider = services.BuildServiceProvider();
+        var options = provider.GetRequiredService<IOptions<UiOptions>>().Value;
+        options.MaxCardWidth.Should().Be(400);
+        options.EnableDragDrop.Should().BeFalse();
+    }
 }
