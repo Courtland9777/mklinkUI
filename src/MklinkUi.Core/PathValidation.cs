@@ -17,14 +17,14 @@ public static class PathValidation
     /// <summary>
     /// Ensures the provided path is absolute and returns the normalized value.
     /// </summary>
-    public static string EnsureAbsolute(string path)
+    public static string EnsureAbsolute(string path, string paramName)
     {
         if (string.IsNullOrWhiteSpace(path))
-            throw new ArgumentException("Paths must be absolute.");
+            throw new ArgumentException("Paths must be absolute.", paramName);
 
         var full = Path.GetFullPath(path);
         if (!Path.IsPathFullyQualified(full))
-            throw new ArgumentException("Paths must be absolute.");
+            throw new ArgumentException("Paths must be absolute.", paramName);
 
         return full;
     }

@@ -26,8 +26,8 @@ public sealed class SymlinkService : ISymlinkService
         await Task.Yield();
         cancellationToken.ThrowIfCancellationRequested();
 
-        sourceFile = PathValidation.EnsureAbsolute(sourceFile);
-        destinationFolder = PathValidation.EnsureAbsolute(destinationFolder);
+        sourceFile = PathValidation.EnsureAbsolute(sourceFile, nameof(sourceFile));
+        destinationFolder = PathValidation.EnsureAbsolute(destinationFolder, nameof(destinationFolder));
 
         if (!_developerMode.IsEnabled)
             return new SymlinkResult(false, "Developer mode not enabled.", ErrorCodes.DevModeRequired);
@@ -45,6 +45,7 @@ public sealed class SymlinkService : ISymlinkService
         }
 
         var link = Path.Combine(destinationFolder, Path.GetFileName(sourceFile));
+        link = Path.GetFullPath(link);
         if (File.Exists(link) || Directory.Exists(link))
         {
             _logger.LogInformation("Link already exists, skipping: {Link}", link);
@@ -66,17 +67,19 @@ public sealed class SymlinkService : ISymlinkService
         }
     }
 
-    public Task<IReadOnlyList<SymlinkResult>> CreateDirectoryLinksAsync(IReadOnlyList<string> sourceFolders,
+    public async Task<IReadOnlyList<SymlinkResult>> CreateDirectoryLinksAsync(IReadOnlyList<string> sourceFolders,
         string destinationFolder, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(sourceFolders);
         cancellationToken.ThrowIfCancellationRequested();
-        destinationFolder = PathValidation.EnsureAbsolute(destinationFolder);
+        await Task.Yield();
+        cancellationToken.ThrowIfCancellationRequested();
+        destinationFolder = PathValidation.EnsureAbsolute(destinationFolder, nameof(destinationFolder));
 
         if (!_developerMode.IsEnabled)
         {
             var fails = Enumerable.Repeat(new SymlinkResult(false, "Developer mode not enabled.", ErrorCodes.DevModeRequired), sourceFolders.Count).ToArray();
-            return Task.FromResult<IReadOnlyList<SymlinkResult>>(fails);
+            return fails;
         }
 
         var results = new List<SymlinkResult>(sourceFolders.Count);
@@ -86,7 +89,7 @@ public sealed class SymlinkService : ISymlinkService
             string absSource;
             try
             {
-                absSource = PathValidation.EnsureAbsolute(source);
+                absSource = PathValidation.EnsureAbsolute(source, nameof(sourceFolders));
             }
             catch (ArgumentException)
             {
@@ -95,11 +98,14 @@ public sealed class SymlinkService : ISymlinkService
             }
 
             var link = Path.Combine(destinationFolder, Path.GetFileName(absSource));
+            link = Path.GetFullPath(link);
             if (File.Exists(link) || Directory.Exists(link))
             {
                 results.Add(new SymlinkResult(false, "Link already exists.", ErrorCodes.AlreadyExists));
                 continue;
             }
+
+            cancellationToken.ThrowIfCancellationRequested();
 
             try
             {
@@ -113,7 +119,7 @@ public sealed class SymlinkService : ISymlinkService
             }
         }
 
-        return Task.FromResult<IReadOnlyList<SymlinkResult>>(results);
+        return results;
     }
 
     private static string GetMessage(Exception ex) => ex switch

@@ -24,40 +24,50 @@ public sealed class FakeSymlinkService : ISymlinkService
     /// </summary>
     public IReadOnlyList<(string LinkPath, string TargetPath)> Created => _created;
 
-    public void SeedExistingFile(string path) => _files.Add(PathValidation.EnsureAbsolute(path));
-    public void SeedExistingDirectory(string path) => _dirs.Add(PathValidation.EnsureAbsolute(path));
-    public void SeedExistingLink(string path) => _links.Add(PathValidation.EnsureAbsolute(path));
+    public void SeedExistingFile(string path) => _files.Add(PathValidation.EnsureAbsolute(path, nameof(path)));
+    public void SeedExistingDirectory(string path) => _dirs.Add(PathValidation.EnsureAbsolute(path, nameof(path)));
+    public void SeedExistingLink(string path) => _links.Add(PathValidation.EnsureAbsolute(path, nameof(path)));
 
-    public Task<SymlinkResult> CreateFileLinkAsync(string sourceFile, string destinationFolder,
+    public async Task<SymlinkResult> CreateFileLinkAsync(string sourceFile, string destinationFolder,
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        sourceFile = PathValidation.EnsureAbsolute(sourceFile);
-        destinationFolder = PathValidation.EnsureAbsolute(destinationFolder);
+        await Task.Yield();
+        cancellationToken.ThrowIfCancellationRequested();
+
+        sourceFile = PathValidation.EnsureAbsolute(sourceFile, nameof(sourceFile));
+        destinationFolder = PathValidation.EnsureAbsolute(destinationFolder, nameof(destinationFolder));
 
         if (!_developerMode.IsEnabled)
-            return Task.FromResult(new SymlinkResult(false, "Developer mode not enabled.", ErrorCodes.DevModeRequired));
+            return new SymlinkResult(false, "Developer mode not enabled.", ErrorCodes.DevModeRequired);
 
         var linkPath = Path.Combine(destinationFolder, Path.GetFileName(sourceFile));
+        linkPath = Path.GetFullPath(linkPath);
+
         if (_links.Contains(linkPath) || _files.Contains(linkPath))
-            return Task.FromResult(new SymlinkResult(false, "Link already exists.", ErrorCodes.AlreadyExists));
+            return new SymlinkResult(false, "Link already exists.", ErrorCodes.AlreadyExists);
+
+        cancellationToken.ThrowIfCancellationRequested();
 
         _links.Add(linkPath);
         _created.Add((linkPath, sourceFile));
-        return Task.FromResult(new SymlinkResult(true));
+        return new SymlinkResult(true);
     }
 
-    public Task<IReadOnlyList<SymlinkResult>> CreateDirectoryLinksAsync(IReadOnlyList<string> sourceFolders,
+    public async Task<IReadOnlyList<SymlinkResult>> CreateDirectoryLinksAsync(IReadOnlyList<string> sourceFolders,
         string destinationFolder, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(sourceFolders);
         cancellationToken.ThrowIfCancellationRequested();
-        destinationFolder = PathValidation.EnsureAbsolute(destinationFolder);
+        await Task.Yield();
+        cancellationToken.ThrowIfCancellationRequested();
+
+        destinationFolder = PathValidation.EnsureAbsolute(destinationFolder, nameof(destinationFolder));
 
         if (!_developerMode.IsEnabled)
         {
             var fails = Enumerable.Repeat(new SymlinkResult(false, "Developer mode not enabled.", ErrorCodes.DevModeRequired), sourceFolders.Count).ToArray();
-            return Task.FromResult<IReadOnlyList<SymlinkResult>>(fails);
+            return fails;
         }
 
         var results = new List<SymlinkResult>(sourceFolders.Count);
@@ -67,7 +77,7 @@ public sealed class FakeSymlinkService : ISymlinkService
             string absSource;
             try
             {
-                absSource = PathValidation.EnsureAbsolute(source);
+                absSource = PathValidation.EnsureAbsolute(source, nameof(sourceFolders));
             }
             catch (ArgumentException)
             {
@@ -76,18 +86,22 @@ public sealed class FakeSymlinkService : ISymlinkService
             }
 
             var linkPath = Path.Combine(destinationFolder, Path.GetFileName(absSource));
+            linkPath = Path.GetFullPath(linkPath);
+
             if (_links.Contains(linkPath) || _dirs.Contains(linkPath))
             {
                 results.Add(new SymlinkResult(false, "Link already exists.", ErrorCodes.AlreadyExists));
                 continue;
             }
 
+            cancellationToken.ThrowIfCancellationRequested();
+
             _links.Add(linkPath);
             _created.Add((linkPath, absSource));
             results.Add(new SymlinkResult(true));
         }
 
-        return Task.FromResult<IReadOnlyList<SymlinkResult>>(results);
+        return results;
     }
 
     private sealed class AlwaysOnDeveloperModeService : IDeveloperModeService
