@@ -6,22 +6,40 @@ const target = { value: '', classList: { remove: () => {} } };
 
 global.document = { getElementById: () => target };
 
-// Existing FileList support
-dropFolders({ preventDefault: () => { prevented = true; }, dataTransfer: { files: [{ path: 'C:/new' }] } });
-assert.strictEqual(target.value, 'C:/new');
-assert.strictEqual(prevented, true);
+(async () => {
+    // Existing FileList support
+    await dropFolders({ preventDefault: () => { prevented = true; }, dataTransfer: { files: [{ path: 'C:/new' }] } });
+    assert.strictEqual(target.value, 'C:/new');
+    assert.strictEqual(prevented, true);
 
-// Reset for DataTransferItemList scenario
-prevented = false;
-target.value = '';
+    // Reset for DataTransferItemList scenario
+    prevented = false;
+    target.value = '';
 
-const items = [{
-    webkitGetAsEntry: () => ({ isDirectory: true, fullPath: '/C/dir' })
-}];
+    const items = [{
+        webkitGetAsEntry: () => ({ isDirectory: true, fullPath: '/C/dir' })
+    }];
 
-dropFolders({ preventDefault: () => { prevented = true; }, dataTransfer: { files: [], items } });
+    await dropFolders({ preventDefault: () => { prevented = true; }, dataTransfer: { files: [], items } });
 
-assert.strictEqual(target.value, 'C/dir');
-assert.strictEqual(prevented, true);
+    assert.strictEqual(target.value, 'C/dir');
+    assert.strictEqual(prevented, true);
 
-console.log('dropFolders test passed');
+    // Support getAsFileSystemHandle
+    prevented = false;
+    target.value = '';
+
+    const handleItems = [{
+        getAsFileSystemHandle: async () => ({ kind: 'directory', name: 'C', path: 'C:/handleDir' })
+    }];
+
+    await dropFolders({ preventDefault: () => { prevented = true; }, dataTransfer: { files: [], items: handleItems } });
+
+    assert.strictEqual(target.value, 'C:/handleDir');
+    assert.strictEqual(prevented, true);
+
+    console.log('dropFolders test passed');
+})().catch(err => {
+    console.error(err);
+    process.exit(1);
+});
