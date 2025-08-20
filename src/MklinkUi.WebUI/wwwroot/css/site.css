@@ -42,3 +42,7 @@ main {
 .validation-summary-valid {
   display: none;
 }
+
+#sourceFolders.dragover {
+  border: 2px dashed #258cfb;
+}

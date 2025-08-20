@@ -80,8 +80,17 @@ function appendFolders(target, files) {
     });
 }
 
+function dropFolders(evt) {
+    evt.preventDefault();
+    const target = document.getElementById('sourceFolders');
+    if (target) {
+        target.classList.remove('dragover');
+        appendFolders(target, evt.dataTransfer.files);
+    }
+}
+
 if (typeof module !== 'undefined') {
-    module.exports = { appendFolders };
+    module.exports = { appendFolders, dropFolders };
 }
 
 function toggleInputs() {
