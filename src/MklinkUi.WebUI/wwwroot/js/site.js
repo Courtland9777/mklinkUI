@@ -20,49 +20,69 @@ async function browseFile(inputId) {
 
 async function browseFolder(inputId, allowMultiple = false) {
     const target = document.getElementById(inputId);
+    const input = document.createElement('input');
+    input.type = 'file';
 
-    if (allowMultiple) {
-        const input = document.createElement('input');
-        input.type = 'file';
+    if ('webkitdirectory' in input) {
         input.webkitdirectory = true;
-        input.multiple = true;
-        input.onchange = e => appendFolders(target, e.target.files);
+        if (allowMultiple) {
+            input.multiple = true;
+            input.onchange = e => appendFolders(target, e.target.files);
+        } else {
+            input.onchange = e => {
+                const file = e.target.files[0];
+                if (file) {
+                    // Prefer the full path when available (e.g., Electron or Chromium-based browsers)
+                    const path = file.path || file.webkitRelativePath.split('/')[0];
+                    target.value = path;
+                }
+            };
+        }
         input.click();
         return;
     }
 
-    if (window.showDirectoryPicker) {
-        try {
-            const handle = await window.showDirectoryPicker();
-            let path = handle.name;
+    if (!window.showDirectoryPicker) return;
 
-            // Non-standard: some browsers expose a full path on the handle
-            if ('path' in handle) {
-                path = handle.path;
-            } else if (handle.resolve && navigator.storage?.getDirectory) {
-                try {
-                    const root = await navigator.storage.getDirectory();
-                    const segments = await root.resolve(handle);
-                    if (segments) path = segments.join('/');
-                } catch { }
+    const getPath = async (handle) => {
+        let path = handle.name;
+        if ('path' in handle) {
+            path = handle.path;
+        } else if (handle.resolve && navigator.storage?.getDirectory) {
+            try {
+                const root = await navigator.storage.getDirectory();
+                const segments = await root.resolve(handle);
+                if (segments) path = segments.join('/');
+            } catch { }
+        }
+        return path;
+    };
+
+    if (allowMultiple) {
+        while (true) {
+            try {
+                const handle = await window.showDirectoryPicker();
+                const path = await getPath(handle);
+                appendFolder(target, path);
+            } catch {
+                break; // Cancel ends the selection loop
             }
-
-            target.value = path;
-        } catch { }
+        }
         return;
     }
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.webkitdirectory = true;
-    input.onchange = e => {
-        const file = e.target.files[0];
-        if (file) {
-            // Prefer the full path when available (e.g., Electron or Chromium-based browsers)
-            const path = file.path || file.webkitRelativePath.split('/')[0];
-            target.value = path;
-        }
-    };
-    input.click();
+
+    try {
+        const handle = await window.showDirectoryPicker();
+        target.value = await getPath(handle);
+    } catch { }
+}
+
+function appendFolder(target, path) {
+    const existing = new Set(target.value.split(/\r?\n/).filter(Boolean));
+    const norm = path.replaceAll('\\', '/');
+    if (!existing.has(norm)) {
+        target.value += (target.value ? "\n" : "") + norm;
+    }
 }
 
 function appendFolders(target, files) {
@@ -71,13 +91,7 @@ function appendFolders(target, files) {
         const path = (f.path || f.webkitRelativePath.split('/')[0]).replaceAll('\\', '/');
         dirs.add(path);
     });
-    if (dirs.size === 0) return;
-    const existing = new Set(target.value.split(/\r?\n/).filter(Boolean));
-    dirs.forEach(d => {
-        if (!existing.has(d)) {
-            target.value += (target.value ? "\n" : "") + d;
-        }
-    });
+    dirs.forEach(d => appendFolder(target, d));
 }
 
 if (typeof module !== 'undefined') {
