@@ -83,10 +83,24 @@ function appendFolders(target, files) {
 function dropFolders(evt) {
     evt.preventDefault();
     const target = document.getElementById('sourceFolders');
-    if (target) {
-        target.classList.remove('dragover');
-        appendFolders(target, evt.dataTransfer.files);
+    if (!target) {
+        return;
     }
+
+    target.classList.remove('dragover');
+
+    let files = evt.dataTransfer.files;
+
+    // Some browsers provide directories via dataTransfer.items rather than files.
+    if ((!files || files.length === 0) && evt.dataTransfer.items) {
+        const items = Array.from(evt.dataTransfer.items);
+        files = items
+            .map(i => i.webkitGetAsEntry && i.webkitGetAsEntry())
+            .filter(e => e && e.isDirectory)
+            .map(e => ({ path: e.fullPath.replace(/^\//, '') }));
+    }
+
+    appendFolders(target, files);
 }
 
 if (typeof module !== 'undefined') {
