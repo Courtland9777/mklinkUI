@@ -89,10 +89,9 @@ async function dropFolders(evt) {
 
     target.classList.remove('dragover');
 
-    let files = evt.dataTransfer.files;
+    let files = [];
 
-    // Some browsers provide directories via dataTransfer.items rather than files.
-    if ((!files || files.length === 0) && evt.dataTransfer.items) {
+    if (evt.dataTransfer.items) {
         const items = Array.from(evt.dataTransfer.items);
         const handles = await Promise.all(items.map(async i => {
             if (i.getAsFileSystemHandle) {
@@ -113,6 +112,10 @@ async function dropFolders(evt) {
             return null;
         }));
         files = handles.filter(Boolean);
+    }
+
+    if (files.length === 0 && evt.dataTransfer.files) {
+        files = evt.dataTransfer.files;
     }
 
     appendFolders(target, files);
