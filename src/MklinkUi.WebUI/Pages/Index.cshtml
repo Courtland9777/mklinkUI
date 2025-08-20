@@ -40,8 +40,8 @@
                 <div class="mb-3" id="fileInputs">
                     <label class="form-label" asp-for="SourceFile">Select a single source file</label>
                     <div class="input-group">
-                        <input class="form-control" id="sourceFile" asp-for="SourceFile" placeholder="C:\\source\\file.txt" />
-                        <button type="button" class="btn btn-outline-secondary" onclick="browseFile('sourceFile', false)"><i class="fa-solid fa-file-import me-1"></i>Browse</button>
+                        <input class="form-control" id="sourceFile" asp-for="SourceFile" placeholder="C:\source\file.txt" />
+                        <button type="button" class="btn btn-outline-secondary" onclick="browseFile('sourceFile')"><i class="fa-solid fa-file-import me-1"></i>Browse</button>
                     </div>
                     <span asp-validation-for="SourceFile" class="text-danger"></span>
                     <div class="form-text">Enter the absolute path to the source file.</div>
@@ -50,7 +50,7 @@
                 <div class="mb-3" id="fileDest">
                     <label class="form-label" asp-for="DestinationFolder">Select destination folder</label>
                     <div class="input-group">
-                        <input class="form-control" id="destFolderFile" asp-for="DestinationFolder" placeholder="C:\\links" />
+                        <input class="form-control" id="destFolderFile" asp-for="DestinationFolder" placeholder="C:\links" />
                         <button type="button" class="btn btn-outline-secondary" onclick="browseFolder('destFolderFile')"><i class="fa-solid fa-folder-open me-1"></i>Browse</button>
                     </div>
                     <span asp-validation-for="DestinationFolder" class="text-danger"></span>
@@ -63,8 +63,8 @@
                 <div class="mb-3" id="folderSource">
                     <label class="form-label" asp-for="SourceFolders">Select one or more source folders</label>
                     <div class="input-group">
-                        <textarea class="form-control" id="sourceFolders" asp-for="SourceFolders" rows="5" placeholder="C:\\source\\folder"></textarea>
-                        <button type="button" class="btn btn-outline-secondary" onclick="browseFolders('sourceFolders')"><i class="fa-solid fa-folder-open me-1"></i>Browse Folders…</button>
+                        <textarea class="form-control" id="sourceFolders" asp-for="SourceFolders" rows="5" placeholder="C:\source\folder"></textarea>
+                        <button type="button" class="btn btn-outline-secondary" onclick="browseFolder('sourceFolders', true)"><i class="fa-solid fa-folder-open me-1"></i>Browse Folders…</button>
                     </div>
                     <span asp-validation-for="SourceFolders" class="text-danger"></span>
                     <div class="form-text">Enter one absolute folder path per line or use Browse to select multiple folders.</div>
@@ -73,7 +73,7 @@
                 <div class="mb-3" id="folderDest">
                     <label class="form-label" asp-for="DestinationFolder">Select destination folder</label>
                     <div class="input-group">
-                        <input class="form-control" id="destFolder" asp-for="DestinationFolder" placeholder="C:\\destination" />
+                        <input class="form-control" id="destFolder" asp-for="DestinationFolder" placeholder="C:\destination" />
                         <button type="button" class="btn btn-outline-secondary" onclick="browseFolder('destFolder')"><i class="fa-solid fa-folder-open me-1"></i>Browse</button>
                     </div>
                     <span asp-validation-for="DestinationFolder" class="text-danger"></span>

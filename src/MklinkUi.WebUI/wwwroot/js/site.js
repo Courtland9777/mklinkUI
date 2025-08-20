@@ -1,28 +1,36 @@
 // File and folder browsers
 // Browsers limit access to absolute file paths for security, so only file names are available.
-async function browseFile(inputId, allowMultiple = false) {
+async function browseFile(inputId) {
     const target = document.getElementById(inputId);
     if (window.showOpenFilePicker) {
         try {
-            const handles = await window.showOpenFilePicker({ multiple: allowMultiple });
-            handles.forEach(h => {
-                target.value += (target.value ? "\n" : "") + h.name;
-            });
+            const [handle] = await window.showOpenFilePicker({ multiple: false });
+            if (handle) target.value = handle.name;
         } catch { }
         return;
     }
     const input = document.createElement('input');
     input.type = 'file';
-    if (allowMultiple) input.multiple = true;
     input.onchange = e => {
-        Array.from(e.target.files).forEach(file => {
-            target.value += (target.value ? "\n" : "") + file.name;
-        });
+        const file = e.target.files[0];
+        if (file) target.value = file.name;
     };
     input.click();
 }
 
-async function browseFolder(inputId) {
+async function browseFolder(inputId, allowMultiple = false) {
+    const target = document.getElementById(inputId);
+
+    if (allowMultiple) {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.webkitdirectory = true;
+        input.multiple = true;
+        input.onchange = e => appendFolders(target, e.target.files);
+        input.click();
+        return;
+    }
+
     if (window.showDirectoryPicker) {
         try {
             const handle = await window.showDirectoryPicker();
@@ -39,7 +47,7 @@ async function browseFolder(inputId) {
                 } catch { }
             }
 
-            document.getElementById(inputId).value = path;
+            target.value = path;
         } catch { }
         return;
     }
@@ -51,7 +59,7 @@ async function browseFolder(inputId) {
         if (file) {
             // Prefer the full path when available (e.g., Electron or Chromium-based browsers)
             const path = file.path || file.webkitRelativePath.split('/')[0];
-            document.getElementById(inputId).value = path;
+            target.value = path;
         }
     };
     input.click();
@@ -70,16 +78,6 @@ function appendFolders(target, files) {
             target.value += (target.value ? "\n" : "") + d;
         }
     });
-}
-
-async function browseFolders(textAreaId) {
-    const target = document.getElementById(textAreaId);
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.webkitdirectory = true;
-    input.multiple = true;
-    input.onchange = e => appendFolders(target, e.target.files);
-    input.click();
 }
 
 if (typeof module !== 'undefined') {
