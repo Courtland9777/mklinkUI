@@ -38,6 +38,23 @@ global.document = { getElementById: () => target };
     assert.strictEqual(target.value, 'C:/handleDir');
     assert.strictEqual(prevented, true);
 
+    // Prefer items when File objects lack path data
+    prevented = false;
+    target.value = '';
+
+    const fileItems = [{ name: 'file.txt', webkitRelativePath: '' }];
+    const itemWithHandle = [{
+        getAsFileSystemHandle: async () => ({ kind: 'directory', name: 'D', path: 'D:/fromItems' })
+    }];
+
+    await dropFolders({
+        preventDefault: () => { prevented = true; },
+        dataTransfer: { files: fileItems, items: itemWithHandle }
+    });
+
+    assert.strictEqual(target.value, 'D:/fromItems');
+    assert.strictEqual(prevented, true);
+
     console.log('dropFolders test passed');
 })().catch(err => {
     console.error(err);
