@@ -63,11 +63,11 @@
                 <div class="mb-3" id="folderSource">
                     <label class="form-label" asp-for="SourceFolders">Select one or more source folders</label>
                     <div class="input-group">
-                        <textarea class="form-control" id="sourceFolders" asp-for="SourceFolders" rows="5" placeholder="C:\source\folder"></textarea>
+                        <textarea class="form-control" id="sourceFolders" asp-for="SourceFolders" rows="5" placeholder="C:\source\folder" ondragover="event.preventDefault()" ondrop="dropFolders(event)" ondragenter="this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')"></textarea>
                         <button type="button" class="btn btn-outline-secondary" onclick="browseFolder('sourceFolders', true)"><i class="fa-solid fa-folder-open me-1"></i>Browse Folders…</button>
                     </div>
                     <span asp-validation-for="SourceFolders" class="text-danger"></span>
-                    <div class="form-text">Enter one absolute folder path per line or use Browse to select multiple folders.</div>
+                    <div class="form-text">Enter one absolute folder path per line, drag and drop folders, or use Browse to select multiple folders.</div>
                 </div>
 
                 <div class="mb-3" id="folderDest">
