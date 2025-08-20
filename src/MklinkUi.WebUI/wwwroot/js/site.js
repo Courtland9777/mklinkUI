@@ -80,7 +80,7 @@ function appendFolders(target, files) {
     });
 }
 
-function dropFolders(evt) {
+async function dropFolders(evt) {
     evt.preventDefault();
     const target = document.getElementById('sourceFolders');
     if (!target) {
@@ -94,10 +94,25 @@ function dropFolders(evt) {
     // Some browsers provide directories via dataTransfer.items rather than files.
     if ((!files || files.length === 0) && evt.dataTransfer.items) {
         const items = Array.from(evt.dataTransfer.items);
-        files = items
-            .map(i => i.webkitGetAsEntry && i.webkitGetAsEntry())
-            .filter(e => e && e.isDirectory)
-            .map(e => ({ path: e.fullPath.replace(/^\//, '') }));
+        const handles = await Promise.all(items.map(async i => {
+            if (i.getAsFileSystemHandle) {
+                try {
+                    const h = await i.getAsFileSystemHandle();
+                    if (h && h.kind === 'directory') {
+                        let path = h.name;
+                        if ('path' in h) path = h.path;
+                        return { path };
+                    }
+                } catch { }
+            } else if (i.webkitGetAsEntry) {
+                const e = i.webkitGetAsEntry();
+                if (e && e.isDirectory) {
+                    return { path: e.fullPath.replace(/^\//, '') };
+                }
+            }
+            return null;
+        }));
+        files = handles.filter(Boolean);
     }
 
     appendFolders(target, files);
