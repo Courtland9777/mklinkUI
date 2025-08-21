@@ -122,7 +122,7 @@ async function dropFolders(evt) {
 }
 
 if (typeof module !== 'undefined') {
-    module.exports = { appendFolders, dropFolders };
+    module.exports = { appendFolders, dropFolders, browseFile, browseFolder };
 }
 
 function toggleInputs() {
