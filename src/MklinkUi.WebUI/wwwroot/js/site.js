@@ -18,6 +18,26 @@ async function browseFile(inputId) {
     input.click();
 }
 
+function getFolderPath(file) {
+    if (!file) return '';
+
+    if (file.path && file.webkitRelativePath) {
+        const base = file.path.slice(0, file.path.length - file.webkitRelativePath.length);
+        const topLevel = file.webkitRelativePath.split(/[/\\]/)[0];
+        return (base + topLevel).replaceAll('\\', '/');
+    }
+
+    if (file.path) {
+        return file.path.replaceAll('\\', '/');
+    }
+
+    if (file.webkitRelativePath) {
+        return file.webkitRelativePath.split(/[/\\]/)[0].replaceAll('\\', '/');
+    }
+
+    return '';
+}
+
 async function browseFolder(inputId, allowMultiple = false) {
     const target = document.getElementById(inputId);
 
@@ -57,9 +77,8 @@ async function browseFolder(inputId, allowMultiple = false) {
     input.onchange = e => {
         const file = e.target.files[0];
         if (file) {
-            // Prefer the full path when available (e.g., Electron or Chromium-based browsers)
-            const path = file.path || file.webkitRelativePath.split('/')[0];
-            target.value = path;
+            const path = getFolderPath(file);
+            if (path) target.value = path;
         }
     };
     input.click();
@@ -68,8 +87,8 @@ async function browseFolder(inputId, allowMultiple = false) {
 function appendFolders(target, files) {
     const dirs = new Set();
     Array.from(files).forEach(f => {
-        const path = (f.path || f.webkitRelativePath.split('/')[0]).replaceAll('\\', '/');
-        dirs.add(path);
+        const path = getFolderPath(f);
+        if (path) dirs.add(path);
     });
     if (dirs.size === 0) return;
     const existing = new Set(target.value.split(/\r?\n/).filter(Boolean));
