@@ -114,7 +114,7 @@ async function dropFolders(evt) {
 
     const dt = evt.dataTransfer || {};
     const uriList = dt.getData?.('text/uri-list') || '';
-    const plain = dt.getData?.('text') || '';
+    const plain = dt.getData?.('text/plain') || dt.getData?.('text') || '';
     const combined = [uriList, plain].filter(Boolean).join('\\n');
     const dtFiles = dt.files;
     const items = dt.items ? Array.from(dt.items) : [];
@@ -145,7 +145,9 @@ async function dropFolders(evt) {
             }));
             files = handles.filter(Boolean);
             if (files.length > 0 && files.every(f => !/[\\/]/.test(f.path))) {
-                files = [];
+                if (combined) {
+                    files = [];
+                }
             }
         }
     }

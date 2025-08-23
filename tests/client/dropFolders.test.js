@@ -64,11 +64,27 @@ global.document = { getElementById: () => target };
         dataTransfer: {
             files: [],
             items: nameOnlyHandle,
-            getData: type => type === 'text' ? 'file:///F:/fullPath' : ''
+            getData: type => type === 'text/plain' ? 'file:///F:/fullPath' : ''
         }
     });
 
     assert.strictEqual(target.value, 'F:/fullPath');
+    assert.strictEqual(prevented, true);
+
+    // Fallback to name when no text data
+    prevented = false;
+    target.value = '';
+
+    await dropFolders({
+        preventDefault: () => { prevented = true; },
+        dataTransfer: {
+            files: [],
+            items: nameOnlyHandle,
+            getData: () => ''
+        }
+    });
+
+    assert.strictEqual(target.value, 'justName');
     assert.strictEqual(prevented, true);
 
     // Prefer items when File objects lack path data
