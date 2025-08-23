@@ -51,6 +51,26 @@ global.document = { getElementById: () => target };
     assert.strictEqual(target.value, 'C:/handleDir');
     assert.strictEqual(prevented, true);
 
+    // Fallback to text when handle lacks full path
+    prevented = false;
+    target.value = '';
+
+    const nameOnlyHandle = [{
+        getAsFileSystemHandle: async () => ({ kind: 'directory', name: 'justName' })
+    }];
+
+    await dropFolders({
+        preventDefault: () => { prevented = true; },
+        dataTransfer: {
+            files: [],
+            items: nameOnlyHandle,
+            getData: type => type === 'text' ? 'file:///F:/fullPath' : ''
+        }
+    });
+
+    assert.strictEqual(target.value, 'F:/fullPath');
+    assert.strictEqual(prevented, true);
+
     // Prefer items when File objects lack path data
     prevented = false;
     target.value = '';

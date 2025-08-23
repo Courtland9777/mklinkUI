@@ -138,6 +138,9 @@ async function dropFolders(evt) {
                 return null;
             }));
             files = handles.filter(Boolean);
+            if (files.length > 0 && files.every(f => !/[\\/]/.test(f.path))) {
+                files = [];
+            }
         }
     }
 
