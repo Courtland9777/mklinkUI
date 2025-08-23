@@ -5,4 +5,16 @@ const target = { value: 'C:/existing' };
 appendFolders(target, []);
 assert.strictEqual(target.value, 'C:/existing');
 
-console.log('appendFolders cancel test passed');
+const targetWithPath = { value: '' };
+const files = [{
+    path: 'C:/base/folder/sub/file.txt',
+    webkitRelativePath: 'folder/sub/file.txt'
+}];
+appendFolders(targetWithPath, files);
+assert.strictEqual(targetWithPath.value, 'C:/base/folder');
+
+const onlyPathTarget = { value: '' };
+appendFolders(onlyPathTarget, [{ path: 'C:/single/folder/file.txt', name: 'file.txt' }]);
+assert.strictEqual(onlyPathTarget.value, 'C:/single/folder');
+
+console.log('appendFolders tests passed');

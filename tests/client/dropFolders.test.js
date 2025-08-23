@@ -12,6 +12,19 @@ global.document = { getElementById: () => target };
     assert.strictEqual(target.value, 'C:/new');
     assert.strictEqual(prevented, true);
 
+    // Reset for DataTransferItem getAsFile scenario
+    prevented = false;
+    target.value = '';
+
+    const itemsWithFile = [{
+        getAsFile: () => ({ path: 'C:/fromItem/f.txt', name: 'f.txt' })
+    }];
+
+    await dropFolders({ preventDefault: () => { prevented = true; }, dataTransfer: { files: [], items: itemsWithFile } });
+
+    assert.strictEqual(target.value, 'C:/fromItem');
+    assert.strictEqual(prevented, true);
+
     // Reset for DataTransferItemList scenario
     prevented = false;
     target.value = '';
@@ -38,6 +51,42 @@ global.document = { getElementById: () => target };
     assert.strictEqual(target.value, 'C:/handleDir');
     assert.strictEqual(prevented, true);
 
+    // Fallback to text when handle lacks full path
+    prevented = false;
+    target.value = '';
+
+    const nameOnlyHandle = [{
+        getAsFileSystemHandle: async () => ({ kind: 'directory', name: 'justName' })
+    }];
+
+    await dropFolders({
+        preventDefault: () => { prevented = true; },
+        dataTransfer: {
+            files: [],
+            items: nameOnlyHandle,
+            getData: type => type === 'text/plain' ? 'file:///F:/fullPath' : ''
+        }
+    });
+
+    assert.strictEqual(target.value, 'F:/fullPath');
+    assert.strictEqual(prevented, true);
+
+    // Fallback to name when no text data
+    prevented = false;
+    target.value = '';
+
+    await dropFolders({
+        preventDefault: () => { prevented = true; },
+        dataTransfer: {
+            files: [],
+            items: nameOnlyHandle,
+            getData: () => ''
+        }
+    });
+
+    assert.strictEqual(target.value, 'justName');
+    assert.strictEqual(prevented, true);
+
     // Prefer items when File objects lack path data
     prevented = false;
     target.value = '';
@@ -53,6 +102,41 @@ global.document = { getElementById: () => target };
     });
 
     assert.strictEqual(target.value, 'D:/fromItems');
+    assert.strictEqual(prevented, true);
+
+    // Fallback to text data when no file metadata
+    prevented = false;
+    target.value = '';
+
+    await dropFolders({
+        preventDefault: () => { prevented = true; },
+        dataTransfer: {
+            files: [],
+            getData: type => type === 'text' ? 'file:///E:/fromText' : ''
+        }
+    });
+
+    assert.strictEqual(target.value, 'E:/fromText');
+    assert.strictEqual(prevented, true);
+
+    // Ensure text is captured before async handle access clears it
+    prevented = false;
+    target.value = '';
+    let textVal = 'file:///G:/delayed';
+    const clearingHandle = [{
+        getAsFileSystemHandle: async () => { textVal = ''; return { kind: 'directory', name: 'noPath' }; }
+    }];
+
+    await dropFolders({
+        preventDefault: () => { prevented = true; },
+        dataTransfer: {
+            files: [],
+            items: clearingHandle,
+            getData: type => type === 'text' ? textVal : ''
+        }
+    });
+
+    assert.strictEqual(target.value, 'G:/delayed');
     assert.strictEqual(prevented, true);
 
     console.log('dropFolders test passed');

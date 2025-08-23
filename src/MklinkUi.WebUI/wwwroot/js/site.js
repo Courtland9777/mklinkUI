@@ -18,6 +18,30 @@ async function browseFile(inputId) {
     input.click();
 }
 
+function getFolderPath(file) {
+    if (!file) return '';
+
+    if (file.path && file.webkitRelativePath) {
+        const base = file.path.slice(0, file.path.length - file.webkitRelativePath.length);
+        const topLevel = file.webkitRelativePath.split(/[/\\]/)[0];
+        return (base + topLevel).replaceAll('\\', '/');
+    }
+
+    if (file.path) {
+        const normalized = file.path.replaceAll('\\', '/');
+        if (file.name && normalized.endsWith('/' + file.name)) {
+            return normalized.slice(0, normalized.length - file.name.length - 1);
+        }
+        return normalized;
+    }
+
+    if (file.webkitRelativePath) {
+        return file.webkitRelativePath.split(/[/\\]/)[0].replaceAll('\\', '/');
+    }
+
+    return '';
+}
+
 async function browseFolder(inputId, allowMultiple = false) {
     const target = document.getElementById(inputId);
 
@@ -57,9 +81,8 @@ async function browseFolder(inputId, allowMultiple = false) {
     input.onchange = e => {
         const file = e.target.files[0];
         if (file) {
-            // Prefer the full path when available (e.g., Electron or Chromium-based browsers)
-            const path = file.path || file.webkitRelativePath.split('/')[0];
-            target.value = path;
+            const path = getFolderPath(file);
+            if (path) target.value = path;
         }
     };
     input.click();
@@ -68,8 +91,8 @@ async function browseFolder(inputId, allowMultiple = false) {
 function appendFolders(target, files) {
     const dirs = new Set();
     Array.from(files).forEach(f => {
-        const path = (f.path || f.webkitRelativePath.split('/')[0]).replaceAll('\\', '/');
-        dirs.add(path);
+        const path = getFolderPath(f);
+        if (path) dirs.add(path);
     });
     if (dirs.size === 0) return;
     const existing = new Set(target.value.split(/\r?\n/).filter(Boolean));
@@ -89,34 +112,63 @@ async function dropFolders(evt) {
 
     target.classList.remove('dragover');
 
+    const dt = evt.dataTransfer || {};
+    const uriList = dt.getData?.('text/uri-list') || '';
+    const plain = dt.getData?.('text/plain') || dt.getData?.('text') || '';
+    const combined = [uriList, plain].filter(Boolean).join('\\n');
+    const dtFiles = dt.files;
+    const items = dt.items ? Array.from(dt.items) : [];
+
     let files = [];
 
-    if (evt.dataTransfer.items) {
-        const items = Array.from(evt.dataTransfer.items);
-        const handles = await Promise.all(items.map(async i => {
-            if (i.getAsFileSystemHandle) {
-                try {
-                    const h = await i.getAsFileSystemHandle();
-                    if (h && h.kind === 'directory') {
-                        let path = h.name;
-                        if ('path' in h) path = h.path;
-                        return { path };
+    if (items.length) {
+        files = items.map(i => i.getAsFile?.()).filter(f => f && (f.path || f.webkitRelativePath));
+
+        if (files.length === 0) {
+            const handles = await Promise.all(items.map(async i => {
+                if (i.getAsFileSystemHandle) {
+                    try {
+                        const h = await i.getAsFileSystemHandle();
+                        if (h && h.kind === 'directory') {
+                            let path = h.name;
+                            if ('path' in h) path = h.path;
+                            return { path };
+                        }
+                    } catch { }
+                } else if (i.webkitGetAsEntry) {
+                    const e = i.webkitGetAsEntry();
+                    if (e && e.isDirectory) {
+                        return { path: e.fullPath.replace(/^\//, '') };
                     }
-                } catch { }
-            } else if (i.webkitGetAsEntry) {
-                const e = i.webkitGetAsEntry();
-                if (e && e.isDirectory) {
-                    return { path: e.fullPath.replace(/^\//, '') };
+                }
+                return null;
+            }));
+            files = handles.filter(Boolean);
+            if (files.length > 0 && files.every(f => !/[\\/]/.test(f.path))) {
+                if (combined) {
+                    files = [];
                 }
             }
-            return null;
-        }));
-        files = handles.filter(Boolean);
+        }
     }
 
-    if (files.length === 0 && evt.dataTransfer.files) {
-        files = evt.dataTransfer.files;
+    if (files.length === 0 && dtFiles) {
+        files = dtFiles;
     }
+
+    if (files.length === 0 && combined) {
+        files = combined.split(/\r?\n/)
+            .map(l => l.trim())
+            .filter(Boolean)
+            .map(p => {
+                let decoded = p.startsWith('file://') ? decodeURIComponent(p.replace('file://', '')) : p;
+                if (/^\/[A-Za-z]:/.test(decoded)) {
+                    decoded = decoded.slice(1);
+                }
+                return { path: decoded };
+            });
+    }
+
 
     appendFolders(target, files);
 }
