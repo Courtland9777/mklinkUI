@@ -13,4 +13,8 @@ const files = [{
 appendFolders(targetWithPath, files);
 assert.strictEqual(targetWithPath.value, 'C:/base/folder');
 
+const onlyPathTarget = { value: '' };
+appendFolders(onlyPathTarget, [{ path: 'C:/single/folder/file.txt', name: 'file.txt' }]);
+assert.strictEqual(onlyPathTarget.value, 'C:/single/folder');
+
 console.log('appendFolders tests passed');

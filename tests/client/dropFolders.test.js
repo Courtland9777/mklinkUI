@@ -12,6 +12,19 @@ global.document = { getElementById: () => target };
     assert.strictEqual(target.value, 'C:/new');
     assert.strictEqual(prevented, true);
 
+    // Reset for DataTransferItem getAsFile scenario
+    prevented = false;
+    target.value = '';
+
+    const itemsWithFile = [{
+        getAsFile: () => ({ path: 'C:/fromItem/f.txt', name: 'f.txt' })
+    }];
+
+    await dropFolders({ preventDefault: () => { prevented = true; }, dataTransfer: { files: [], items: itemsWithFile } });
+
+    assert.strictEqual(target.value, 'C:/fromItem');
+    assert.strictEqual(prevented, true);
+
     // Reset for DataTransferItemList scenario
     prevented = false;
     target.value = '';

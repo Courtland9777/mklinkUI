@@ -28,7 +28,11 @@ function getFolderPath(file) {
     }
 
     if (file.path) {
-        return file.path.replaceAll('\\', '/');
+        const normalized = file.path.replaceAll('\\', '/');
+        if (file.name && normalized.endsWith('/' + file.name)) {
+            return normalized.slice(0, normalized.length - file.name.length - 1);
+        }
+        return normalized;
     }
 
     if (file.webkitRelativePath) {
@@ -112,25 +116,29 @@ async function dropFolders(evt) {
 
     if (evt.dataTransfer.items) {
         const items = Array.from(evt.dataTransfer.items);
-        const handles = await Promise.all(items.map(async i => {
-            if (i.getAsFileSystemHandle) {
-                try {
-                    const h = await i.getAsFileSystemHandle();
-                    if (h && h.kind === 'directory') {
-                        let path = h.name;
-                        if ('path' in h) path = h.path;
-                        return { path };
+        files = items.map(i => i.getAsFile?.()).filter(f => f && (f.path || f.webkitRelativePath));
+
+        if (files.length === 0) {
+            const handles = await Promise.all(items.map(async i => {
+                if (i.getAsFileSystemHandle) {
+                    try {
+                        const h = await i.getAsFileSystemHandle();
+                        if (h && h.kind === 'directory') {
+                            let path = h.name;
+                            if ('path' in h) path = h.path;
+                            return { path };
+                        }
+                    } catch { }
+                } else if (i.webkitGetAsEntry) {
+                    const e = i.webkitGetAsEntry();
+                    if (e && e.isDirectory) {
+                        return { path: e.fullPath.replace(/^\//, '') };
                     }
-                } catch { }
-            } else if (i.webkitGetAsEntry) {
-                const e = i.webkitGetAsEntry();
-                if (e && e.isDirectory) {
-                    return { path: e.fullPath.replace(/^\//, '') };
                 }
-            }
-            return null;
-        }));
-        files = handles.filter(Boolean);
+                return null;
+            }));
+            files = handles.filter(Boolean);
+        }
     }
 
     if (files.length === 0 && evt.dataTransfer.files) {
