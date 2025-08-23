@@ -145,6 +145,24 @@ async function dropFolders(evt) {
         files = evt.dataTransfer.files;
     }
 
+    if (files.length === 0 || Array.from(files).every(f => !f.path && !f.webkitRelativePath)) {
+        const uriList = evt.dataTransfer.getData('text/uri-list');
+        const plain = evt.dataTransfer.getData('text');
+        const combined = [uriList, plain].filter(Boolean).join('\n');
+        if (combined) {
+            files = combined.split(/\r?\n/)
+                .map(l => l.trim())
+                .filter(Boolean)
+                .map(p => {
+                    let decoded = p.startsWith('file://') ? decodeURIComponent(p.replace('file://', '')) : p;
+                    if (/^\/[A-Za-z]:/.test(decoded)) {
+                        decoded = decoded.slice(1);
+                    }
+                    return { path: decoded };
+                });
+        }
+    }
+
     appendFolders(target, files);
 }
 

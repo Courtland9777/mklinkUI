@@ -68,6 +68,21 @@ global.document = { getElementById: () => target };
     assert.strictEqual(target.value, 'D:/fromItems');
     assert.strictEqual(prevented, true);
 
+    // Fallback to text data when no file metadata
+    prevented = false;
+    target.value = '';
+
+    await dropFolders({
+        preventDefault: () => { prevented = true; },
+        dataTransfer: {
+            files: [],
+            getData: type => type === 'text' ? 'file:///E:/fromText' : ''
+        }
+    });
+
+    assert.strictEqual(target.value, 'E:/fromText');
+    assert.strictEqual(prevented, true);
+
     console.log('dropFolders test passed');
 })().catch(err => {
     console.error(err);
