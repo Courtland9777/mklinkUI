@@ -103,6 +103,26 @@ global.document = { getElementById: () => target };
     assert.strictEqual(target.value, 'E:/fromText');
     assert.strictEqual(prevented, true);
 
+    // Ensure text is captured before async handle access clears it
+    prevented = false;
+    target.value = '';
+    let textVal = 'file:///G:/delayed';
+    const clearingHandle = [{
+        getAsFileSystemHandle: async () => { textVal = ''; return { kind: 'directory', name: 'noPath' }; }
+    }];
+
+    await dropFolders({
+        preventDefault: () => { prevented = true; },
+        dataTransfer: {
+            files: [],
+            items: clearingHandle,
+            getData: type => type === 'text' ? textVal : ''
+        }
+    });
+
+    assert.strictEqual(target.value, 'G:/delayed');
+    assert.strictEqual(prevented, true);
+
     console.log('dropFolders test passed');
 })().catch(err => {
     console.error(err);

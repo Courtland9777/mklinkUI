@@ -112,10 +112,16 @@ async function dropFolders(evt) {
 
     target.classList.remove('dragover');
 
+    const dt = evt.dataTransfer || {};
+    const uriList = dt.getData?.('text/uri-list') || '';
+    const plain = dt.getData?.('text') || '';
+    const combined = [uriList, plain].filter(Boolean).join('\\n');
+    const dtFiles = dt.files;
+    const items = dt.items ? Array.from(dt.items) : [];
+
     let files = [];
 
-    if (evt.dataTransfer.items) {
-        const items = Array.from(evt.dataTransfer.items);
+    if (items.length) {
         files = items.map(i => i.getAsFile?.()).filter(f => f && (f.path || f.webkitRelativePath));
 
         if (files.length === 0) {
@@ -144,27 +150,23 @@ async function dropFolders(evt) {
         }
     }
 
-    if (files.length === 0 && evt.dataTransfer.files) {
-        files = evt.dataTransfer.files;
+    if (files.length === 0 && dtFiles) {
+        files = dtFiles;
     }
 
-    if (files.length === 0 || Array.from(files).every(f => !f.path && !f.webkitRelativePath)) {
-        const uriList = evt.dataTransfer.getData('text/uri-list');
-        const plain = evt.dataTransfer.getData('text');
-        const combined = [uriList, plain].filter(Boolean).join('\n');
-        if (combined) {
-            files = combined.split(/\r?\n/)
-                .map(l => l.trim())
-                .filter(Boolean)
-                .map(p => {
-                    let decoded = p.startsWith('file://') ? decodeURIComponent(p.replace('file://', '')) : p;
-                    if (/^\/[A-Za-z]:/.test(decoded)) {
-                        decoded = decoded.slice(1);
-                    }
-                    return { path: decoded };
-                });
-        }
+    if (files.length === 0 && combined) {
+        files = combined.split(/\r?\n/)
+            .map(l => l.trim())
+            .filter(Boolean)
+            .map(p => {
+                let decoded = p.startsWith('file://') ? decodeURIComponent(p.replace('file://', '')) : p;
+                if (/^\/[A-Za-z]:/.test(decoded)) {
+                    decoded = decoded.slice(1);
+                }
+                return { path: decoded };
+            });
     }
+
 
     appendFolders(target, files);
 }
